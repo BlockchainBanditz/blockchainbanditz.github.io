@@ -32,6 +32,7 @@ main{position:relative;z-index:2;padding:55px 18px 80px}
 .arrow-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--gold);background:#111;color:var(--gold2);font-size:20px;cursor:pointer}
 .primary{width:100%;border:0;border-radius:26px;padding:15px;margin-top:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#080808;font-weight:800;font-size:16px;cursor:pointer}
 .primary:hover{filter:brightness(1.08)}
+.primary:disabled{opacity:.45;cursor:not-allowed;filter:none}
 .notice{font-size:12px;color:#999;line-height:1.5;text-align:center;margin:13px 5px 0}
 .status{display:none;margin-top:12px;padding:12px;border-radius:12px;background:#171717;border:1px solid #333;color:#ccc;font-size:12px}
 .quote-box{display:none;margin-top:12px;padding:14px;border-radius:12px;background:#171717;border:1px solid rgba(212,175,55,.35);color:#ddd;font-size:13px;line-height:1.5}
@@ -98,7 +99,7 @@ main{position:relative;z-index:2;padding:55px 18px 80px}
       <div id="quoteBox" class="quote-box"></div>
       <button id="walletBtn" class="wallet-btn" type="button" onclick="connectWallet()">Connect Wallet</button>
       <div id="walletLine" class="wallet-line"></div>
-      <button id="swapBtn" class="primary" type="button" style="display:none" onclick="executeSwap()">Swap</button>
+      <button id="swapBtn" class="primary" type="button" disabled onclick="executeSwap()">Connect wallet to enable Swap</button>
       <div id="status" class="status"></div>
       <p class="notice">Wallet connection is optional. A swap is only sent after you press Swap and approve it in your wallet. This build supports the tested BUCKX ↔ CRO LP route.</p>
     </div>
@@ -332,7 +333,7 @@ async function connectWallet(){
     document.getElementById('walletLine').style.display='block';
     document.getElementById('walletLine').textContent=walletAddress;
     showStatus('Wallet connected. Your current quote is ready. Press Swap only when you want to start the test.');
-    document.getElementById('swapBtn').style.display='block';
+    const swapBtn=document.getElementById('swapBtn'); swapBtn.disabled=false; swapBtn.textContent='Swap 10 BUCKX → CRO';
   }catch(e){
     showStatus(e.message||String(e));
   }
