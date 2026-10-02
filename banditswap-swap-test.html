@@ -302,7 +302,7 @@ function pad32(hex){
 function addrArg(a){return pad32(a);}
 function uintArg(x){return pad32(BigInt(x).toString(16));}
 function encodeAddressArray(path, offsetHex){
-  return pad32(offsetHex)+pad32(path.length)+path.map(addrArg).join('');
+  return pad32(offsetHex)+uintArg(path.length)+path.map(addrArg).join('');
 }
 function nowDeadline(){return Math.floor(Date.now()/1000)+1200;}
 function escapeHtml2(s){
@@ -378,7 +378,7 @@ function encodeSwapExactTokensForETH(amountIn,amountOutMin,path,to,deadline){
     pad32('a0')+
     addrArg(to)+
     uintArg(deadline)+
-    pad32(path.length)+
+    uintArg(path.length)+
     addrArg(path[0])+addrArg(path[1]);
 }
 function encodeSwapExactETHForTokens(amountOutMin,path,to,deadline){
@@ -389,7 +389,7 @@ function encodeSwapExactETHForTokens(amountOutMin,path,to,deadline){
     pad32('80')+
     addrArg(to)+
     uintArg(deadline)+
-    pad32(path.length)+
+    uintArg(path.length)+
     addrArg(path[0])+addrArg(path[1]);
 }
 
