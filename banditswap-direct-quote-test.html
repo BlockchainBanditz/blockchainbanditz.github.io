@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BanditSwap — Blockchain Banditz</title>
+<link href="https://fonts.cdnfonts.com/css/sprite-graffiti" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&display=swap');
+:root{--gold:#d4af37;--gold2:#f9e27d;--bg:#000;--panel:#101010;--muted:#aaa}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Poppins,sans-serif;background:radial-gradient(circle at 20% 20%,rgba(212,175,55,.10),transparent 32%),radial-gradient(circle at 80% 80%,rgba(255,255,255,.05),transparent 30%),#000;color:#fff;overflow-x:hidden}
+header{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 40px;border-bottom:1px solid rgba(212,175,55,.3);backdrop-filter:blur(10px);position:relative;z-index:5}
+.logo{font-family:'Sprite Graffiti',cursive;font-size:24px;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+nav a{padding:8px 12px;color:#fff;text-decoration:none;border-radius:20px}
+nav a:hover,nav a.active{color:var(--gold2);background:rgba(212,175,55,.08)}
+main{position:relative;z-index:2;padding:55px 18px 80px}
+.hero{text-align:center;max-width:900px;margin:0 auto 28px}
+.hero h1{font-family:'Sprite Graffiti',cursive;font-size:clamp(42px,8vw,72px);margin:10px 0;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:#bbb;margin:8px auto;max-width:650px}
+.swap-wrap{max-width:520px;margin:28px auto}
+.panel{background:rgba(16,16,16,.96);border:1px solid rgba(212,175,55,.42);border-radius:22px;padding:20px;box-shadow:0 20px 70px rgba(0,0,0,.55)}
+.token-box{background:#191919;border:1px solid #333;border-radius:16px;padding:14px;margin:10px 0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.label{font-size:12px;color:#aaa}
+.amount{width:100%;border:0;outline:0;background:transparent;color:#fff;font-size:30px;margin-top:6px;font-family:inherit}
+.amount::placeholder{color:#555}
+.token-select{border:1px solid #7d6425;background:#0f0f0f;color:#fff;border-radius:22px;padding:10px 14px;font:inherit;font-weight:600;min-width:125px}
+.swap-arrow{display:flex;justify-content:center;margin:-2px 0}
+.arrow-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--gold);background:#111;color:var(--gold2);font-size:20px;cursor:pointer}
+.primary{width:100%;border:0;border-radius:26px;padding:15px;margin-top:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#080808;font-weight:800;font-size:16px;cursor:pointer}
+.primary:hover{filter:brightness(1.08)}
+.notice{font-size:12px;color:#999;line-height:1.5;text-align:center;margin:13px 5px 0}
+.status{display:none;margin-top:12px;padding:12px;border-radius:12px;background:#171717;border:1px solid #333;color:#ccc;font-size:12px}
+.admin{max-width:900px;margin:45px auto 0}
+.admin h2{font-family:'Playfair Display',serif;color:var(--gold2);text-align:center}
+.admin-note{text-align:center;color:#999;font-size:12px;margin-bottom:18px}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.admin-card{background:rgba(255,255,255,.035);border:1px solid rgba(212,175,55,.25);border-radius:18px;padding:18px}
+.admin-card h3{margin-top:0;color:var(--gold2)}
+.field{margin:10px 0}
+.field label{display:block;font-size:12px;color:#aaa;margin-bottom:5px}
+.field input{width:100%;padding:11px;border-radius:10px;border:1px solid #333;background:#0d0d0d;color:#fff;font:inherit}
+.small-btn{border:1px solid #9b7b29;background:#151515;color:var(--gold2);border-radius:18px;padding:9px 13px;cursor:pointer}
+.token-list{display:grid;gap:8px;margin-top:12px}
+.token-item{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#141414;border:1px solid #292929;border-radius:12px;padding:10px;font-size:12px}
+.token-item span{overflow-wrap:anywhere}
+.badge{font-size:10px;color:#111;background:var(--gold2);padding:4px 7px;border-radius:10px;font-weight:700}
+.footer{text-align:center;color:#666;font-size:11px;margin-top:50px}
+@media(max-width:700px){header{padding:16px 18px;flex-direction:column}.admin-grid{grid-template-columns:1fr}nav a{padding:7px 9px}.hero{margin-bottom:18px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">BIC</div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="index.html" onclick="try{localStorage.setItem('openBcl','1')}catch(e){}">BCL League</a>
+    <a href="banditswap.html" class="active">BanditSwap</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>BanditSwap</h1>
+    <p>Simple token trading for the Blockchain Banditz ecosystem.</p>
+    <p>Direct Cronos quote test — no aggregator API and no transaction signing.</p>
+  </section>
+
+  <section class="swap-wrap">
+    <div class="panel">
+      <div class="token-box">
+        <div class="row"><span class="label">You pay</span><span class="label">Balance —</span></div>
+        <div class="row">
+          <input id="fromAmount" class="amount" inputmode="decimal" placeholder="0.0">
+          <select id="fromToken" class="token-select"></select>
+        </div>
+      </div>
+
+      <div class="swap-arrow">
+        <button class="arrow-btn" type="button" onclick="flipTokens()" aria-label="Switch tokens">↕</button>
+      </div>
+
+      <div class="token-box">
+        <div class="row"><span class="label">You receive</span><span class="label">Balance —</span></div>
+        <div class="row">
+          <input id="toAmount" class="amount" placeholder="0.0" readonly>
+          <select id="toToken" class="token-select"></select>
+        </div>
+      </div>
+
+      <button class="primary" type="button" onclick="getDirectQuote()">Get Live Quote</button>
+      <div id="status" class="status"></div>
+      <div id="quoteBox" class="status" style="display:none"></div>
+      <p class="notice">No transaction is sent by this prototype. Your wallet will only be asked to sign transactions after live swap routing is connected.</p>
+    </div>
+  </section>
+
+  <section class="admin">
+    <h2>BanditSwap Token Manager</h2>
+    <p class="admin-note">Prototype admin interface. The browser-only whitelist is for testing the design; it is not a security control. Before real trading, the whitelist will be moved to an on-chain admin contract.</p>
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h3>Whitelist a token</h3>
+        <div class="field"><label for="tokenName">Token name</label><input id="tokenName" placeholder="Example: My Token"></div>
+        <div class="field"><label for="tokenSymbol">Symbol</label><input id="tokenSymbol" placeholder="MTK"></div>
+        <div class="field"><label for="tokenAddress">Cronos contract address</label><input id="tokenAddress" placeholder="0x..."></div>
+        <button class="small-btn" type="button" onclick="addToken()">+ Whitelist token</button>
+      </div>
+      <div class="admin-card">
+        <h3>Whitelisted tokens</h3>
+        <div id="tokenList" class="token-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">BanditSwap • Cronos Mainnet • Blockchain Banditz</div>
+</main>
+
+<script>
+const starterTokens = [
+  {name:'Cronos',symbol:'CRO',address:'native'},
+  {name:'Bridged USDC (Cronos)',symbol:'USDC.e',address:'0xc21223249CA28397B4B6541dfFaEcC539BfF0c59'},
+  {name:'Tether USD',symbol:'USDT',address:'verify-before-live'},
+  {name:'Wrapped Bitcoin',symbol:'WBTC',address:'verify-before-live'},
+  {name:'Wrapped Ether',symbol:'WETH',address:'verify-before-live'},
+  {name:'VVS',symbol:'VVS',address:'verify-before-live'},
+  {name:'Buckx',symbol:'BUCKX',address:'0x58DC82669Ae64878cae2B8A0584179A6b33Bb3D2'}
+];
+
+function getTokens(){
+  try{
+    const extra=JSON.parse(localStorage.getItem('banditSwapTokens')||'[]');
+    return starterTokens.concat(Array.isArray(extra)?extra:[]);
+  }catch(e){return starterTokens}
+}
+function populate(){
+  const tokens=getTokens();
+  const a=document.getElementById('fromToken'), b=document.getElementById('toToken');
+  a.innerHTML=''; b.innerHTML='';
+  tokens.forEach((t,i)=>{
+    const text=t.symbol+' — '+t.name;
+    a.add(new Option(text,t.symbol));
+    b.add(new Option(text,t.symbol));
+  });
+  a.value='CRO'; b.value='USDC.e';
+  renderList(tokens);
+}
+function renderList(tokens){
+  document.getElementById('tokenList').innerHTML=tokens.map(t=>`
+    <div class="token-item">
+      <span><strong>${escapeHtml(t.symbol)}</strong> — ${escapeHtml(t.name)}<br><small>${escapeHtml(t.address)}</small></span>
+      <span class="badge">WHITELISTED</span>
+    </div>`).join('');
+}
+function addToken(){
+  const name=document.getElementById('tokenName').value.trim();
+  const symbol=document.getElementById('tokenSymbol').value.trim().toUpperCase();
+  const address=document.getElementById('tokenAddress').value.trim();
+  const status=document.getElementById('status');
+  if(!name||!symbol||!address){showStatus('Enter the token name, symbol and Cronos contract address.');return}
+  if(!/^0x[a-fA-F0-9]{40}$/.test(address)){showStatus('That does not look like a valid EVM contract address.');return}
+  try{
+    const extra=JSON.parse(localStorage.getItem('banditSwapTokens')||'[]');
+    extra.push({name,symbol,address});
+    localStorage.setItem('banditSwapTokens',JSON.stringify(extra));
+  }catch(e){showStatus('Could not save the prototype whitelist in this browser.');return}
+  document.getElementById('tokenName').value='';
+  document.getElementById('tokenSymbol').value='';
+  document.getElementById('tokenAddress').value='';
+  populate();
+  showStatus(symbol+' added to the prototype whitelist on this device.');
+}
+function flipTokens(){
+  const a=document.getElementById('fromToken'),b=document.getElementById('toToken');
+  const x=a.value;a.value=b.value;b.value=x;
+}
+async function getDirectQuote(){
+  const amount=document.getElementById('fromAmount').value.trim();
+  const from=document.getElementById('fromToken').value;
+  const to=document.getElementById('toToken').value;
+  const status=document.getElementById('status');
+  const quote=document.getElementById('quoteBox');
+  quote.style.display='none';
+  if(!amount || Number(amount)<=0){showStatus('Enter an amount first.');return}
+  if(from!=='CRO' || to!=='USDC.e'){showStatus('This first direct test is CRO → USDC.e using the VVS V2 router.');return}
+  showStatus('Reading the Cronos blockchain directly…');
+  try{
+    const wei=toUnits(amount,18);
+    const data='0xd06ca61f'+padUint(wei)+padUint(64)+padUint(2)+encodeAddress(WCRO)+encodeAddress(USDC_E);
+    const result=await rpc('eth_call',[{to:ROUTER,data:data},'latest']);
+    const hex=result?.result || result;
+    const outHex='0x'+hex.replace(/^0x/,'').slice(66,130);
+    const out=BigInt(outHex);
+    const formatted=formatUnits(out,6);
+    document.getElementById('toAmount').value=formatted;
+    quote.style.display='block';
+    quote.textContent='Live on-chain quote: '+amount+' CRO ≈ '+formatted+' USDC.e (VVS V2 direct route).';
+    status.style.display='none';
+  }catch(e){
+    showStatus('Direct quote failed: '+(e.message||e));
+  }
+}
+const RPC='https://evm.cronos.org';
+const ROUTER='0x145863Eb42Cf62847A6Ca784e6416C1682b1b2Ae';
+const WCRO='0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23';
+const USDC_E='0xc21223249CA28397B4B6541dfFaEcC539BfF0c59';
+function encodeAddress(a){return a.toLowerCase().replace(/^0x/,'').padStart(64,'0')}
+function padUint(x){return BigInt(x).toString(16).padStart(64,'0')}
+function toUnits(v,d){const [a,b='']=String(v).split('.');return BigInt(a||0)*10n**BigInt(d)+BigInt((b+'0'.repeat(d)).slice(0,d)||0)}
+function formatUnits(x,d){const z=x.toString().padStart(d+1,'0');return z.slice(0,-d)+'.'+z.slice(-d).replace(/0+$/,'').replace(/\.$/,'')}
+async function rpc(method,params){
+ const r=await fetch(RPC,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
+ const j=await r.json(); if(j.error) throw new Error(j.error.message||'RPC error'); return j.result;
+}
+
+function showStatus(t){
+  const el=document.getElementById('status');el.style.display='block';el.textContent=t;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+populate();
+</script>
+</body>
+</html>
