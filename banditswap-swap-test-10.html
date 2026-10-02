@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BanditSwap — Blockchain Banditz</title>
+<link href="https://fonts.cdnfonts.com/css/sprite-graffiti" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&display=swap');
+:root{--gold:#d4af37;--gold2:#f9e27d;--bg:#000;--panel:#101010;--muted:#aaa}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Poppins,sans-serif;background:radial-gradient(circle at 20% 20%,rgba(212,175,55,.10),transparent 32%),radial-gradient(circle at 80% 80%,rgba(255,255,255,.05),transparent 30%),#000;color:#fff;overflow-x:hidden}
+header{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 40px;border-bottom:1px solid rgba(212,175,55,.3);backdrop-filter:blur(10px);position:relative;z-index:5}
+.logo{font-family:'Sprite Graffiti',cursive;font-size:24px;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+nav a{padding:8px 12px;color:#fff;text-decoration:none;border-radius:20px}
+nav a:hover,nav a.active{color:var(--gold2);background:rgba(212,175,55,.08)}
+main{position:relative;z-index:2;padding:55px 18px 80px}
+.hero{text-align:center;max-width:900px;margin:0 auto 28px}
+.hero h1{font-family:'Sprite Graffiti',cursive;font-size:clamp(42px,8vw,72px);margin:10px 0;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:#bbb;margin:8px auto;max-width:650px}
+.swap-wrap{max-width:520px;margin:28px auto}
+.panel{background:rgba(16,16,16,.96);border:1px solid rgba(212,175,55,.42);border-radius:22px;padding:20px;box-shadow:0 20px 70px rgba(0,0,0,.55)}
+.token-box{background:#191919;border:1px solid #333;border-radius:16px;padding:14px;margin:10px 0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.label{font-size:12px;color:#aaa}
+.amount{width:100%;border:0;outline:0;background:transparent;color:#fff;font-size:30px;margin-top:6px;font-family:inherit}
+.amount::placeholder{color:#555}
+.token-select{border:1px solid #7d6425;background:#0f0f0f;color:#fff;border-radius:22px;padding:10px 14px;font:inherit;font-weight:600;min-width:125px}
+.swap-arrow{display:flex;justify-content:center;margin:-2px 0}
+.arrow-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--gold);background:#111;color:var(--gold2);font-size:20px;cursor:pointer}
+.primary{width:100%;border:0;border-radius:26px;padding:15px;margin-top:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#080808;font-weight:800;font-size:16px;cursor:pointer}
+.primary:hover{filter:brightness(1.08)}
+.primary:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.notice{font-size:12px;color:#999;line-height:1.5;text-align:center;margin:13px 5px 0}
+.status{display:none;margin-top:12px;padding:12px;border-radius:12px;background:#171717;border:1px solid #333;color:#ccc;font-size:12px}
+.quote-box{display:none;margin-top:12px;padding:14px;border-radius:12px;background:#171717;border:1px solid rgba(212,175,55,.35);color:#ddd;font-size:13px;line-height:1.5}
+.wallet-btn{width:100%;border:1px solid var(--gold);border-radius:26px;padding:13px;margin-top:10px;background:#111;color:var(--gold2);font-weight:700;font-size:15px;cursor:pointer}
+.wallet-line{display:none;margin-top:10px;color:#aaa;font-size:11px;text-align:center;overflow-wrap:anywhere}
+.admin{max-width:900px;margin:45px auto 0}
+.admin h2{font-family:'Playfair Display',serif;color:var(--gold2);text-align:center}
+.admin-note{text-align:center;color:#999;font-size:12px;margin-bottom:18px}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.admin-card{background:rgba(255,255,255,.035);border:1px solid rgba(212,175,55,.25);border-radius:18px;padding:18px}
+.admin-card h3{margin-top:0;color:var(--gold2)}
+.field{margin:10px 0}
+.field label{display:block;font-size:12px;color:#aaa;margin-bottom:5px}
+.field input{width:100%;padding:11px;border-radius:10px;border:1px solid #333;background:#0d0d0d;color:#fff;font:inherit}
+.small-btn{border:1px solid #9b7b29;background:#151515;color:var(--gold2);border-radius:18px;padding:9px 13px;cursor:pointer}
+.token-list{display:grid;gap:8px;margin-top:12px}
+.token-item{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#141414;border:1px solid #292929;border-radius:12px;padding:10px;font-size:12px}
+.token-item span{overflow-wrap:anywhere}
+.badge{font-size:10px;color:#111;background:var(--gold2);padding:4px 7px;border-radius:10px;font-weight:700}
+.footer{text-align:center;color:#666;font-size:11px;margin-top:50px}
+@media(max-width:700px){header{padding:16px 18px;flex-direction:column}.admin-grid{grid-template-columns:1fr}nav a{padding:7px 9px}.hero{margin-bottom:18px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">BIC</div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="index.html" onclick="try{localStorage.setItem('openBcl','1')}catch(e){}">BCL League</a>
+    <a href="banditswap.html" class="active">BanditSwap</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>BanditSwap</h1>
+    <p>Simple token trading for the Blockchain Banditz ecosystem.</p>
+    <p>Live BUCKX ↔ CRO quoting is connected. Swap execution is available for testing.</p>
+  </section>
+
+  <section class="swap-wrap">
+    <div class="panel">
+      <div class="token-box">
+        <div class="row"><span class="label">You pay</span><span class="label">Balance —</span></div>
+        <div class="row">
+          <input id="fromAmount" class="amount" inputmode="decimal" placeholder="0.0">
+          <select id="fromToken" class="token-select"></select>
+        </div>
+      </div>
+
+      <div class="swap-arrow">
+        <button class="arrow-btn" type="button" onclick="flipTokens()" aria-label="Switch tokens">↕</button>
+      </div>
+
+      <div class="token-box">
+        <div class="row"><span class="label">You receive</span><span class="label">Balance —</span></div>
+        <div class="row">
+          <input id="toAmount" class="amount" placeholder="0.0" readonly>
+          <select id="toToken" class="token-select"></select>
+        </div>
+      </div>
+
+      <button class="primary" type="button" onclick="getBuckxQuote()">Get Live BUCKX Quote</button>
+      <div id="quoteBox" class="quote-box"></div>
+      <button id="walletBtn" class="wallet-btn" type="button" onclick="connectWallet()">Connect Wallet</button>
+      <div id="walletLine" class="wallet-line"></div>
+      <button id="swapBtn" class="primary" type="button" disabled onclick="executeSwap()">Connect wallet to enable Swap</button>
+      <div id="status" class="status"></div>
+      <p class="notice">Wallet connection is optional. This diagnostic sends no swap transaction. It tests the BUCKX ↔ CRO route only.</p>
+    </div>
+  </section>
+
+  <section class="admin">
+    <h2>BanditSwap Token Manager</h2>
+    <p class="admin-note">Prototype admin interface. The browser-only whitelist is for testing the design; it is not a security control. Before real trading, the whitelist will be moved to an on-chain admin contract.</p>
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h3>Whitelist a token</h3>
+        <div class="field"><label for="tokenName">Token name</label><input id="tokenName" placeholder="Example: My Token"></div>
+        <div class="field"><label for="tokenSymbol">Symbol</label><input id="tokenSymbol" placeholder="MTK"></div>
+        <div class="field"><label for="tokenAddress">Cronos contract address</label><input id="tokenAddress" placeholder="0x..."></div>
+        <button class="small-btn" type="button" onclick="addToken()">+ Whitelist token</button>
+      </div>
+      <div class="admin-card">
+        <h3>Whitelisted tokens</h3>
+        <div id="tokenList" class="token-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">BanditSwap • Cronos Mainnet • Blockchain Banditz</div>
+</main>
+
+<script>
+const starterTokens = [
+  {name:'Cronos',symbol:'CRO',address:'native'},
+  {name:'USD Coin',symbol:'USDC',address:'verify-before-live'},
+  {name:'Tether USD',symbol:'USDT',address:'verify-before-live'},
+  {name:'Wrapped Bitcoin',symbol:'WBTC',address:'verify-before-live'},
+  {name:'Wrapped Ether',symbol:'WETH',address:'verify-before-live'},
+  {name:'VVS',symbol:'VVS',address:'verify-before-live'},
+  {name:'Buckx',symbol:'BUCKX',address:'0x58DC82669Ae64878cae2B8A0584179A6b33Bb3D2'}
+];
+
+function getTokens(){
+  try{
+    const extra=JSON.parse(localStorage.getItem('banditSwapTokens')||'[]');
+    return starterTokens.concat(Array.isArray(extra)?extra:[]);
+  }catch(e){return starterTokens}
+}
+function populate(){
+  const tokens=getTokens();
+  const a=document.getElementById('fromToken'), b=document.getElementById('toToken');
+  a.innerHTML=''; b.innerHTML='';
+  tokens.forEach((t,i)=>{
+    const text=t.symbol+' — '+t.name;
+    a.add(new Option(text,t.symbol));
+    b.add(new Option(text,t.symbol));
+  });
+  a.value='CRO'; b.value='BUCKX';
+  renderList(tokens);
+}
+function renderList(tokens){
+  document.getElementById('tokenList').innerHTML=tokens.map(t=>`
+    <div class="token-item">
+      <span><strong>${escapeHtml(t.symbol)}</strong> — ${escapeHtml(t.name)}<br><small>${escapeHtml(t.address)}</small></span>
+      <span class="badge">WHITELISTED</span>
+    </div>`).join('');
+}
+function addToken(){
+  const name=document.getElementById('tokenName').value.trim();
+  const symbol=document.getElementById('tokenSymbol').value.trim().toUpperCase();
+  const address=document.getElementById('tokenAddress').value.trim();
+  const status=document.getElementById('status');
+  if(!name||!symbol||!address){showStatus('Enter the token name, symbol and Cronos contract address.');return}
+  if(!/^0x[a-fA-F0-9]{40}$/.test(address)){showStatus('That does not look like a valid EVM contract address.');return}
+  try{
+    const extra=JSON.parse(localStorage.getItem('banditSwapTokens')||'[]');
+    extra.push({name,symbol,address});
+    localStorage.setItem('banditSwapTokens',JSON.stringify(extra));
+  }catch(e){showStatus('Could not save the prototype whitelist in this browser.');return}
+  document.getElementById('tokenName').value='';
+  document.getElementById('tokenSymbol').value='';
+  document.getElementById('tokenAddress').value='';
+  populate();
+  showStatus(symbol+' added to the prototype whitelist on this device.');
+}
+function flipTokens(){
+  const a=document.getElementById('fromToken'),b=document.getElementById('toToken');
+  const x=a.value;a.value=b.value;b.value=x;
+}
+const RPC='https://cronos-evm-rpc.publicnode.com';
+const BUCKX='0x58DC82669Ae64878cae2B8A0584179A6b33Bb3D2'.toLowerCase();
+const WCRO='0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23'.toLowerCase();
+const PAIR='0x769E02Cb9899b86cdD13670da99c048A4f54F8AF';
+
+async function pairCall(data){
+  const r=await fetch(RPC,{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:PAIR,data:data},'latest']})
+  });
+  if(!r.ok) throw new Error('Cronos RPC HTTP '+r.status);
+  const j=await r.json();
+  if(j.error) throw new Error(j.error.message||'Cronos RPC error');
+  return j.result;
+}
+function addressFromWord(x){return '0x'+x.slice(-40).toLowerCase();}
+function fmtNum(n,d=8){return Number(n).toLocaleString(undefined,{maximumFractionDigits:d});}
+function unitsToBigInt(amount){
+  const s=String(amount).trim();
+  if(!/^\d+(\.\d+)?$/.test(s)) throw new Error('Enter a valid amount.');
+  const [a,b='']=s.split('.');
+  return BigInt(a)*1000000000000000000n + BigInt((b+'000000000000000000').slice(0,18));
+}
+function format18(x){
+  const s=x.toString().padStart(19,'0');
+  const whole=s.slice(0,-18);
+  const frac=s.slice(-18).replace(/0+$/,'');
+  return frac ? whole+'.'+frac : whole;
+}
+
+async function getBuckxQuote(){
+  const from=document.getElementById('fromToken').value;
+  const to=document.getElementById('toToken').value;
+  const amount=document.getElementById('fromAmount').value.trim();
+  const status=document.getElementById('status');
+  const quote=document.getElementById('quoteBox');
+  status.style.display='none';
+  quote.style.display='none';
+
+  if(!amount || Number(amount)<=0){showStatus('Enter an amount first.');return;}
+  if(!((from==='BUCKX' && to==='CRO') || (from==='CRO' && to==='BUCKX'))){
+    showStatus('Live quote is currently enabled for the BUCKX ↔ CRO pair.');
+    return;
+  }
+
+  quote.style.display='block';
+  quote.textContent='Reading your BUCKX/WCRO LP directly from Cronos…';
+
+  try{
+    const [t0,t1,res]=await Promise.all([
+      pairCall('0x0dfe1681'),
+      pairCall('0xd21220a7'),
+      pairCall('0x0902f1ac')
+    ]);
+
+    if(!res || res.length<194) throw new Error('The LP did not return its reserves.');
+
+    const token0=addressFromWord(t0);
+    const token1=addressFromWord(t1);
+    const r0=BigInt('0x'+res.slice(2,66));
+    const r1=BigInt('0x'+res.slice(66,130));
+
+    let buckReserve,wcroReserve;
+    if(token0===BUCKX && token1===WCRO){
+      buckReserve=r0; wcroReserve=r1;
+    }else if(token0===WCRO && token1===BUCKX){
+      buckReserve=r1; wcroReserve=r0;
+    }else{
+      throw new Error('The configured pair is not BUCKX/WCRO.');
+    }
+
+    const input=unitsToBigInt(amount);
+    const inputWithFee=input*997n;
+    let output;
+
+    if(from==='BUCKX'){
+      output=(inputWithFee*wcroReserve)/(buckReserve*1000n+inputWithFee);
+    }else{
+      output=(inputWithFee*buckReserve)/(wcroReserve*1000n+inputWithFee);
+    }
+
+    const outputText=format18(output);
+    const spot = from==='BUCKX'
+      ? Number(wcroReserve)/Number(buckReserve)
+      : Number(buckReserve)/Number(wcroReserve);
+
+    const spotOut=Number(amount)*spot;
+    const received=Number(output)/1e18;
+    const impact=spotOut>0 ? (1-received/spotOut)*100 : 0;
+
+    document.getElementById('toAmount').value=outputText;
+    quote.innerHTML='<strong>Live LP quote</strong><br>'+
+      fmtNum(Number(amount),8)+' '+from+' → '+fmtNum(received,8)+' '+to+
+      '<br><span style="color:#aaa">Your BUCKX/WCRO LP • estimated price impact '+impact.toFixed(2)+'% • 0.30% fee assumption • no transaction sent.</span>';
+  }catch(e){
+    quote.innerHTML='<strong>Quote failed</strong><br><span style="color:#aaa">'+escapeHtml(e.message||String(e))+'</span>';
+  }
+}
+function showStatus(t){
+  const el=document.getElementById('status');el.style.display='block';el.textContent=t;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+populate();
+let walletProvider=null, walletAddress=null, lastQuoteWei=null, lastQuoteToken=null;
+
+const ROUTER='0x145863Eb42Cf62847A6Ca784e6416C1682b1b2Ae';
+const CHAIN_ID='0x19';
+const SLIPPAGE_BPS=100; // 1%
+
+function pad32(hex){
+  return String(hex).replace(/^0x/,'').padStart(64,'0');
+}
+function addrArg(a){return pad32(a);}
+function uintArg(x){return pad32(BigInt(x).toString(16));}
+function encodeAddressArray(path, offsetHex){
+  return pad32(String(offsetHex))+uintArg(path.length)+path.map(addrArg).join('');
+}
+function nowDeadline(){return Math.floor(Date.now()/1000)+1200;}
+function escapeHtml2(s){
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+async function walletRequest(method,params=[]){
+  if(!walletProvider) throw new Error('Connect your wallet first.');
+  return walletProvider.request({method,params});
+}
+async function connectWallet(){
+  if(!window.ethereum){
+    showStatus('No compatible wallet was detected. Open this page inside MetaMask or Crypto.com Onchain Wallet.');
+    return;
+  }
+  try{
+    walletProvider=window.ethereum;
+    const chain=await walletRequest('eth_chainId');
+    if(chain.toLowerCase()!==CHAIN_ID){
+      try{
+        await walletRequest('wallet_switchEthereumChain',[{chainId:CHAIN_ID}]);
+      }catch(e){
+        throw new Error('Please switch your wallet to Cronos Mainnet (chain ID 25).');
+      }
+    }
+    const accounts=await walletRequest('eth_requestAccounts');
+    walletAddress=accounts[0];
+    document.getElementById('walletBtn').textContent='Wallet Connected';
+    document.getElementById('walletLine').style.display='block';
+    document.getElementById('walletLine').textContent=walletAddress;
+    showStatus('Wallet connected. Test build 2026-10-02-diagnostic. Your current quote is ready. Press Swap only when you want to start the test.');
+    const swapBtn=document.getElementById('swapBtn'); swapBtn.disabled=false; swapBtn.textContent='Diagnose 10 BUCKX → CRO';
+  }catch(e){
+    showStatus(e.message||String(e));
+  }
+}
+
+function encodeGetAmountsOut(amountIn,path){
+  // getAmountsOut(uint256,address[]) selector 0xd06ca61f
+  return '0xd06ca61f'+uintArg(amountIn)+encodeAddressArray(path,'40');
+}
+async function routerQuote(amountIn,path){
+  const r=await fetch(RPC,{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({jsonrpc:'2.0',id:2,method:'eth_call',params:[{to:ROUTER,data:encodeGetAmountsOut(amountIn,path)},'latest']})
+  });
+  const j=await r.json();
+  if(j.error) throw new Error(j.error.message||'Router quote failed');
+  const raw=j.result;
+  // Dynamic uint[]: offset, length, then values.
+  const len=parseInt(raw.slice(66,130),16);
+  if(!len) throw new Error('Router returned no quote.');
+  return BigInt('0x'+raw.slice(130,194));
+}
+
+async function tokenAllowance(owner, spender){
+  // allowance(address,address) 0xdd62ed3e
+  const data='0xdd62ed3e'+addrArg(owner)+addrArg(spender);
+  const raw=await walletRequest('eth_call',[{to:BUCKX,data:data},'latest']);
+  return BigInt(raw);
+}
+
+async function estimateAndCheckFee(tx){
+  // First simulate the exact call. If it would revert, do not open the wallet.
+  await walletRequest('eth_call',[tx,'latest']);
+
+  const gasHex=await walletRequest('eth_estimateGas',[tx]);
+  const gas=BigInt(gasHex);
+
+  // A simple V2 swap should not need millions of gas. A very large estimate
+  // is treated as a safety failure rather than being handed to the wallet.
+  const HARD_GAS_CAP=300000n;
+  if(gas > HARD_GAS_CAP){
+    throw new Error('The swap simulation estimated '+gas.toString()+' gas, which is above the 300,000 gas safety cap. No transaction was sent.');
+  }
+
+  // Add a 15% buffer, but never exceed the safety cap.
+  let gasLimit=(gas*115n)/100n;
+  if(gasLimit > HARD_GAS_CAP) gasLimit=HARD_GAS_CAP;
+
+  const gasPriceHex=await walletRequest('eth_gasPrice',[]);
+  const gasPrice=BigInt(gasPriceHex);
+  const feeWei=gasLimit*gasPrice;
+  const feeCRO=Number(feeWei)/1e18;
+
+  // Keep the tiny 10-BUCKX test below 0.05 CRO estimated network cost.
+  if(feeWei > 50000000000000000n){
+    throw new Error('Estimated network fee is '+feeCRO.toFixed(6)+' CRO, above the 0.05 CRO safety limit for this test. No transaction was sent.');
+  }
+
+  return {
+    gasLimit: '0x'+gasLimit.toString(16),
+    feeCRO: feeCRO
+  };
+}
+
+async function approveBuckx(amountWei){
+  // approve(address,uint256) 0x095ea7b3
+  const data='0x095ea7b3'+addrArg(ROUTER)+uintArg(amountWei);
+  return walletRequest('eth_sendTransaction',[{
+    from:walletAddress,
+    to:BUCKX,
+    data:data,
+    value:'0x0'
+  }]);
+}
+
+function encodeSwapExactTokensForETH(amountIn,amountOutMin,path,to,deadline){
+  // swapExactTokensForETH(uint256,uint256,address[],address,uint256) 0x18cbafe5
+  // dynamic path starts after 5 static words = 160 bytes; offset = 0xa0
+  return '0x18cbafe5'+
+    uintArg(amountIn)+
+    uintArg(amountOutMin)+
+    pad32('a0')+
+    addrArg(to)+
+    uintArg(deadline)+
+    uintArg(path.length)+
+    addrArg(path[0])+addrArg(path[1]);
+}
+function encodeSwapExactETHForTokens(amountOutMin,path,to,deadline){
+  // swapExactETHForTokens(uint256,address[],address,uint256) 0x7ff36ab5
+  // path offset = 0x80
+  return '0x7ff36ab5'+
+    uintArg(amountOutMin)+
+    pad32('80')+
+    addrArg(to)+
+    uintArg(deadline)+
+    uintArg(path.length)+
+    addrArg(path[0])+addrArg(path[1]);
+}
+
+async function executeSwap(){
+  if(!walletAddress) {
+    await connectWallet();
+    if(!walletAddress) return;
+  }
+
+  const from=document.getElementById('fromToken').value;
+  const to=document.getElementById('toToken').value;
+  const amount=document.getElementById('fromAmount').value.trim();
+
+  if(!amount || Number(amount)<=0){
+    showStatus('Enter an amount first.');
+    return;
+  }
+  if(!((from==='BUCKX'&&to==='CRO')||(from==='CRO'&&to==='BUCKX'))){
+    showStatus('Diagnostic is currently enabled for BUCKX ↔ CRO only.');
+    return;
+  }
+
+  const btn=document.getElementById('swapBtn');
+  btn.disabled=true;
+  showStatus('Running a simulation only — no transaction will be sent.');
+
+  try{
+    const input=unitsToBigInt(amount);
+    const path=from==='BUCKX' ? [BUCKX,WCRO] : [WCRO,BUCKX];
+    const quoted=await routerQuote(input,path);
+    lastQuoteWei=quoted;
+    lastQuoteToken=to;
+
+    // IMPORTANT: minOut = 0 is used only for this diagnostic.
+    // The transaction is never sent.
+    const minOut=0n;
+
+    if(from==='BUCKX'){
+      const allowance=await tokenAllowance(walletAddress,ROUTER);
+      if(allowance < input){
+        showStatus('Diagnostic stopped: the router does not currently have enough BUCKX allowance. No transaction was sent.');
+        return;
+      }
+
+      const data=encodeSwapExactTokensForETH(
+        input,minOut,path,walletAddress,nowDeadline()
+      );
+      const tx={
+        from:walletAddress,
+        to:ROUTER,
+        data:data,
+        value:'0x0'
+      };
+
+      const gasHex=await walletRequest('eth_estimateGas',[tx]);
+      const gas=BigInt(gasHex);
+
+      if(gas > 300000n){
+        throw new Error(
+          'Simulation estimated '+gas.toString()+
+          ' gas, above the safety cap. No transaction was sent.'
+        );
+      }
+
+      showStatus(
+        'DIAGNOSTIC PASSED: BUCKX → CRO can simulate with minOut = 0. '+
+        'No transaction was sent. Estimated gas: '+gas.toString()+
+        '. The earlier failure was therefore related to the minimum-output requirement.'
+      );
+    }else{
+      const data=encodeSwapExactETHForTokens(
+        minOut,path,walletAddress,nowDeadline()
+      );
+      const tx={
+        from:walletAddress,
+        to:ROUTER,
+        data:data,
+        value:'0x'+input.toString(16)
+      };
+
+      const gasHex=await walletRequest('eth_estimateGas',[tx]);
+      const gas=BigInt(gasHex);
+
+      if(gas > 300000n){
+        throw new Error(
+          'Simulation estimated '+gas.toString()+
+          ' gas, above the safety cap. No transaction was sent.'
+        );
+      }
+
+      showStatus(
+        'DIAGNOSTIC PASSED: CRO → BUCKX can simulate with minOut = 0. '+
+        'No transaction was sent. Estimated gas: '+gas.toString()+'.'
+      );
+    }
+  }catch(e){
+    showStatus('Simulation failed: '+(e.message||String(e))+' No transaction was sent.');
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+
+async function waitForReceipt(hash){
+  for(let i=0;i<60;i++){
+    const r=await walletRequest('eth_getTransactionReceipt',[hash]);
+    if(r){
+      if(r.status==='0x0') throw new Error('Transaction reverted. No swap was completed.');
+      return r;
+    }
+    await new Promise(resolve=>setTimeout(resolve,2000));
+  }
+  throw new Error('Transaction was submitted but confirmation took too long. Check your wallet/explorer.');
+}
+
+</script>
+</body>
+</html>
