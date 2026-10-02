@@ -332,7 +332,7 @@ async function connectWallet(){
     document.getElementById('walletBtn').textContent='Wallet Connected';
     document.getElementById('walletLine').style.display='block';
     document.getElementById('walletLine').textContent=walletAddress;
-    showStatus('Wallet connected. Test build 2026-10-02-gas-guard. Your current quote is ready. Press Swap only when you want to start the test.');
+    showStatus('Wallet connected. Test build 2026-10-02-gas-cap. Your current quote is ready. Press Swap only when you want to start the test.');
     const swapBtn=document.getElementById('swapBtn'); swapBtn.disabled=false; swapBtn.textContent='Swap 10 BUCKX → CRO';
   }catch(e){
     showStatus(e.message||String(e));
@@ -366,24 +366,35 @@ async function tokenAllowance(owner, spender){
 }
 
 async function estimateAndCheckFee(tx){
+  // First simulate the exact call. If it would revert, do not open the wallet.
+  await walletRequest('eth_call',[tx,'latest']);
+
   const gasHex=await walletRequest('eth_estimateGas',[tx]);
   const gas=BigInt(gasHex);
+
+  // A simple V2 swap should not need millions of gas. A very large estimate
+  // is treated as a safety failure rather than being handed to the wallet.
+  const HARD_GAS_CAP=300000n;
+  if(gas > HARD_GAS_CAP){
+    throw new Error('The swap simulation estimated '+gas.toString()+' gas, which is above the 300,000 gas safety cap. No transaction was sent.');
+  }
+
+  // Add a 15% buffer, but never exceed the safety cap.
+  let gasLimit=(gas*115n)/100n;
+  if(gasLimit > HARD_GAS_CAP) gasLimit=HARD_GAS_CAP;
+
   const gasPriceHex=await walletRequest('eth_gasPrice',[]);
   const gasPrice=BigInt(gasPriceHex);
-  const feeWei=gas*gasPrice;
+  const feeWei=gasLimit*gasPrice;
   const feeCRO=Number(feeWei)/1e18;
 
-  // Safety guard for this tiny 10-BUCKX test.
+  // Keep the tiny 10-BUCKX test below 0.05 CRO estimated network cost.
   if(feeWei > 50000000000000000n){
     throw new Error('Estimated network fee is '+feeCRO.toFixed(6)+' CRO, above the 0.05 CRO safety limit for this test. No transaction was sent.');
   }
 
-  // Give the transaction a modest 15% gas buffer while keeping the
-  // network gas price explicit, so the wallet does not wildly over-estimate.
-  const gasLimit=(gas*115n)/100n;
   return {
     gasLimit: '0x'+gasLimit.toString(16),
-    gasPrice: '0x'+gasPrice.toString(16),
     feeCRO: feeCRO
   };
 }
@@ -470,8 +481,7 @@ async function executeSwap(){
         to:ROUTER,
         data:data,
         value:'0x0',
-        gas:gas.gasLimit,
-        gasPrice:gas.gasPrice
+        gas:gas.gasLimit
       }]);
     }else{
       const data=encodeSwapExactETHForTokens(minOut,path,walletAddress,nowDeadline());
@@ -483,8 +493,7 @@ async function executeSwap(){
         to:ROUTER,
         data:data,
         value:'0x'+input.toString(16),
-        gas:gas.gasLimit,
-        gasPrice:gas.gasPrice
+        gas:gas.gasLimit
       }]);
     }
 
