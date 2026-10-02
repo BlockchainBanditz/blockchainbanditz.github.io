@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LP Quote</title>
+<style>
+body{font-family:Arial,sans-serif;background:#111;color:#fff;padding:24px;max-width:560px;margin:auto}
+h1{font-size:28px} .box{background:#1d1d1d;border-radius:14px;padding:18px;margin-top:16px}
+input,button{width:100%;box-sizing:border-box;padding:14px;border-radius:10px;border:0;margin-top:10px;font-size:16px}
+button{font-weight:700;cursor:pointer} .muted{color:#aaa;font-size:13px;line-height:1.5}
+#result{font-size:22px;margin-top:16px;word-break:break-word}
+</style>
+</head>
+<body>
+<h1>BUCKX → CRO LP Quote</h1>
+<div class="box">
+<div>Amount of BUCKX</div>
+<input id="amount" type="number" value="8000" step="any">
+<button onclick="quote()">Get Live LP Quote</button>
+<div id="result">Waiting…</div>
+<div class="muted">
+Reads pair <b>0x769E02Cb9899b86cdD13670da99c048A4f54F8AF</b> directly from Cronos.
+No wallet connection. No transaction.
+</div>
+</div>
+<script>
+const RPC="https://evm.cronos.org";
+const PAIR="0x769E02Cb9899b86cdD13670da99c048A4f54F8AF";
+const BUCKX="0x58DC82669Ae64878cae2B8A0584179A6b33Bb3D2".toLowerCase();
+const WCRO="0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23".toLowerCase();
+const SEL={
+ token0:"0x0dfe1681", token1:"0xd21220a7", reserves:"0x0902f1ac"
+};
+function word(x){return x.slice(2).padStart(64,"0")}
+function addr(x){return "0x"+x.slice(-40).toLowerCase()}
+function hexNum(x){return BigInt(x)}
+async function call(data){
+ const r=await fetch(RPC,{method:"POST",headers:{"content-type":"application/json"},
+ body:JSON.stringify({jsonrpc:"2.0",id:1,method:"eth_call",params:[{to:PAIR,data},"latest"]})});
+ const j=await r.json(); if(j.error) throw new Error(j.error.message||"RPC error"); return j.result;
+}
+async function quote(){
+ const out=document.getElementById("result"); out.textContent="Reading pool…";
+ try{
+  const [t0,t1,res]=await Promise.all([call(SEL.token0),call(SEL.token1),call(SEL.reserves)]);
+  const token0=addr(t0), token1=addr(t1);
+  const r0=hexNum("0x"+res.slice(2,66)), r1=hexNum("0x"+res.slice(66,130));
+  let buckRes,wcroRes;
+  if(token0===BUCKX && token1===WCRO){buckRes=r0;wcroRes=r1}
+  else if(token0===WCRO && token1===BUCKX){buckRes=r1;wcroRes=r0}
+  else throw new Error("Pair tokens do not match BUCKX/WCRO");
+  const amount=Number(document.getElementById("amount").value);
+  if(!(amount>0)) throw new Error("Enter an amount");
+  const amountIn=BigInt(Math.floor(amount*1e18));
+  // Standard 0.3% constant-product AMM fee.
+  const inFee=amountIn*997n;
+  const out=(inFee*wcroRes)/(buckRes*1000n+inFee);
+  const spot=Number(wcroRes)/Number(buckRes);
+  const received=Number(out)/1e18;
+  const spotOut=amount*spot;
+  const impact=(1-received/spotOut)*100;
+  out.textContent=`${amount.toLocaleString()} BUCKX → ${received.toFixed(8)} WCRO (≈ CRO)`;
+  out.innerHTML += `<div class="muted" style="margin-top:10px">Spot before trade: 1 WCRO ≈ ${(1/spot).toLocaleString(undefined,{maximumFractionDigits:2})} BUCKX<br>Estimated price impact: ${impact.toFixed(2)}%<br>Fee assumption: 0.30%</div>`;
+ }catch(e){out.textContent="Error: "+e.message}
+}
+quote();
+</script>
+</body>
+</html>
