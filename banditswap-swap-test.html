@@ -332,7 +332,7 @@ async function connectWallet(){
     document.getElementById('walletBtn').textContent='Wallet Connected';
     document.getElementById('walletLine').style.display='block';
     document.getElementById('walletLine').textContent=walletAddress;
-    showStatus('Wallet connected. Test build 2026-10-02. Your current quote is ready. Press Swap only when you want to start the test.');
+    showStatus('Wallet connected. Test build 2026-10-02-gas-guard. Your current quote is ready. Press Swap only when you want to start the test.');
     const swapBtn=document.getElementById('swapBtn'); swapBtn.disabled=false; swapBtn.textContent='Swap 10 BUCKX → CRO';
   }catch(e){
     showStatus(e.message||String(e));
@@ -356,6 +356,36 @@ async function routerQuote(amountIn,path){
   const len=parseInt(raw.slice(66,130),16);
   if(!len) throw new Error('Router returned no quote.');
   return BigInt('0x'+raw.slice(130,194));
+}
+
+async function tokenAllowance(owner, spender){
+  // allowance(address,address) 0xdd62ed3e
+  const data='0xdd62ed3e'+addrArg(owner)+addrArg(spender);
+  const raw=await walletRequest('eth_call',[{to:BUCKX,data:data},'latest']);
+  return BigInt(raw);
+}
+
+async function estimateAndCheckFee(tx){
+  const gasHex=await walletRequest('eth_estimateGas',[tx]);
+  const gas=BigInt(gasHex);
+  const gasPriceHex=await walletRequest('eth_gasPrice',[]);
+  const gasPrice=BigInt(gasPriceHex);
+  const feeWei=gas*gasPrice;
+  const feeCRO=Number(feeWei)/1e18;
+
+  // Safety guard for this tiny 10-BUCKX test.
+  if(feeWei > 50000000000000000n){
+    throw new Error('Estimated network fee is '+feeCRO.toFixed(6)+' CRO, above the 0.05 CRO safety limit for this test. No transaction was sent.');
+  }
+
+  // Give the transaction a modest 15% gas buffer while keeping the
+  // network gas price explicit, so the wallet does not wildly over-estimate.
+  const gasLimit=(gas*115n)/100n;
+  return {
+    gasLimit: '0x'+gasLimit.toString(16),
+    gasPrice: '0x'+gasPrice.toString(16),
+    feeCRO: feeCRO
+  };
 }
 
 async function approveBuckx(amountWei){
@@ -421,17 +451,41 @@ async function executeSwap(){
 
     let txHash;
     if(from==='BUCKX'){
-      showStatus('Step 1 of 2: approve the BanditSwap route to spend your BUCKX. Confirm this in your wallet.');
-      txHash=await approveBuckx(input);
-      showStatus('Approval submitted. Wait for it to confirm, then the swap transaction will be requested.');
-      await waitForReceipt(txHash);
-      showStatus('Step 2 of 2: confirm the BUCKX → CRO swap in your wallet.');
+      const allowance=await tokenAllowance(walletAddress,ROUTER);
+      if(allowance < input){
+        showStatus('Step 1 of 2: approve the BanditSwap route to spend your BUCKX. Confirm this in your wallet.');
+        txHash=await approveBuckx(input);
+        showStatus('Approval submitted. Wait for it to confirm, then the swap transaction will be requested.');
+        await waitForReceipt(txHash);
+      }else{
+        showStatus('Existing BUCKX approval is sufficient. Preparing the swap…');
+      }
+
       const data=encodeSwapExactTokensForETH(input,minOut,path,walletAddress,nowDeadline());
-      txHash=await walletRequest('eth_sendTransaction',[{from:walletAddress,to:ROUTER,data:data,value:'0x0'}]);
+      const tx={from:walletAddress,to:ROUTER,data:data,value:'0x0'};
+      const gas=await estimateAndCheckFee(tx);
+      showStatus('Swap estimated at about '+gas.feeCRO.toFixed(6)+' CRO network fee. Confirm the BUCKX → CRO swap in your wallet.');
+      txHash=await walletRequest('eth_sendTransaction',[{
+        from:walletAddress,
+        to:ROUTER,
+        data:data,
+        value:'0x0',
+        gas:gas.gasLimit,
+        gasPrice:gas.gasPrice
+      }]);
     }else{
-      showStatus('Confirm the CRO → BUCKX swap in your wallet.');
       const data=encodeSwapExactETHForTokens(minOut,path,walletAddress,nowDeadline());
-      txHash=await walletRequest('eth_sendTransaction',[{from:walletAddress,to:ROUTER,data:data,value:'0x'+input.toString(16)}]);
+      const tx={from:walletAddress,to:ROUTER,data:data,value:'0x'+input.toString(16)};
+      const gas=await estimateAndCheckFee(tx);
+      showStatus('Swap estimated at about '+gas.feeCRO.toFixed(6)+' CRO network fee. Confirm the CRO → BUCKX swap in your wallet.');
+      txHash=await walletRequest('eth_sendTransaction',[{
+        from:walletAddress,
+        to:ROUTER,
+        data:data,
+        value:'0x'+input.toString(16),
+        gas:gas.gasLimit,
+        gasPrice:gas.gasPrice
+      }]);
     }
 
     showStatus('Swap transaction submitted. Waiting for confirmation…');
