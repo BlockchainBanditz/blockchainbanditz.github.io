@@ -300,8 +300,8 @@ function pad32(hex){
 }
 function addrArg(a){return pad32(a);}
 function uintArg(x){return pad32(BigInt(x).toString(16));}
-function encodeAddressArray(path){
-  return pad32('a0')+pad32('2')+pad32(path[0])+pad32(path[1]);
+function encodeAddressArray(path, offsetHex){
+  return pad32(offsetHex)+pad32(path.length)+path.map(addrArg).join('');
 }
 function nowDeadline(){return Math.floor(Date.now()/1000)+1200;}
 function escapeHtml2(s){
@@ -340,7 +340,7 @@ async function connectWallet(){
 
 function encodeGetAmountsOut(amountIn,path){
   // getAmountsOut(uint256,address[]) selector 0xd06ca61f
-  return '0xd06ca61f'+uintArg(amountIn)+encodeAddressArray(path);
+  return '0xd06ca61f'+uintArg(amountIn)+encodeAddressArray(path,'40');
 }
 async function routerQuote(amountIn,path){
   const r=await fetch(RPC,{
