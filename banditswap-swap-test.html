@@ -202,6 +202,12 @@ async function pairCall(data){
 }
 function addressFromWord(x){return '0x'+x.slice(-40).toLowerCase();}
 function fmtNum(n,d=8){return Number(n).toLocaleString(undefined,{maximumFractionDigits:d});}
+function formatUnits18(v){
+  const n=BigInt(v);
+  const whole=n/1000000000000000000n;
+  const frac=(n%1000000000000000000n).toString().padStart(18,'0').replace(/0+$/,'');
+  return frac ? whole.toString()+'.'+frac : whole.toString();
+}
 function unitsToBigInt(amount){
   const s=String(amount).trim();
   if(!/^\d+(\.\d+)?$/.test(s)) throw new Error('Enter a valid amount.');
@@ -332,8 +338,8 @@ async function connectWallet(){
     document.getElementById('walletBtn').textContent='Wallet Connected';
     document.getElementById('walletLine').style.display='block';
     document.getElementById('walletLine').textContent=walletAddress;
-    showStatus('Wallet connected. Test build 2026-10-02-diagnostic. Your current quote is ready. Press Swap only when you want to start the test.');
-    const swapBtn=document.getElementById('swapBtn'); swapBtn.disabled=false; swapBtn.textContent='Diagnose 10 BUCKX → CRO';
+    showStatus('Wallet connected. Live swap test is ready. The page will simulate the exact swap and check the network fee before opening wallet confirmation.');
+    const swapBtn=document.getElementById('swapBtn'); swapBtn.disabled=false; swapBtn.textContent='Swap '+document.getElementById('fromToken').value+' → '+document.getElementById('toToken').value;
   }catch(e){
     showStatus(e.message||String(e));
   }
@@ -449,57 +455,66 @@ async function executeSwap(){
     return;
   }
   if(!((from==='BUCKX'&&to==='CRO')||(from==='CRO'&&to==='BUCKX'))){
-    showStatus('Diagnostic is currently enabled for BUCKX ↔ CRO only.');
+    showStatus('Live swap is currently enabled for BUCKX ↔ CRO only.');
     return;
   }
 
   const btn=document.getElementById('swapBtn');
   btn.disabled=true;
-  showStatus('Running a simulation only — no transaction will be sent.');
+  btn.textContent='Preparing swap…';
 
   try{
     const input=unitsToBigInt(amount);
     const path=from==='BUCKX' ? [BUCKX,WCRO] : [WCRO,BUCKX];
-    const quoted=await routerQuote(input,path);
-    lastQuoteWei=quoted;
-    lastQuoteToken=to;
 
-    // IMPORTANT: minOut = 0 is used only for this diagnostic.
-    // The transaction is never sent.
-    const minOut=0n;
+    // Get the executable quote directly from the VVS router, then apply
+    // 1% slippage to that same quote. This avoids the previous mismatch
+    // between the display LP calculation and the router's actual quote.
+    const quoted=await routerQuote(input,path);
+    if(quoted<=0n) throw new Error('Router returned a zero quote.');
+
+    const minOut=(quoted*9900n)/10000n; // 1% slippage
+    const quotedDisplay=formatUnits18(quoted);
+    const minDisplay=formatUnits18(minOut);
 
     if(from==='BUCKX'){
       const allowance=await tokenAllowance(walletAddress,ROUTER);
       if(allowance < input){
-        showStatus('Diagnostic stopped: the router does not currently have enough BUCKX allowance. No transaction was sent.');
-        return;
+        showStatus('BUCKX approval is required. The wallet will ask for approval first.');
+        const approvalHash=await approveBuckx(input);
+        showStatus('Approval submitted. Waiting for confirmation…');
+        await waitForReceipt(approvalHash);
       }
 
       const data=encodeSwapExactTokensForETH(
         input,minOut,path,walletAddress,nowDeadline()
       );
-      const tx={
+      const tx={from:walletAddress,to:ROUTER,data:data,value:'0x0'};
+
+      // Simulate the exact swap before opening the wallet confirmation.
+      await walletRequest('eth_call',[tx,'latest']);
+      const gasHex=await walletRequest('eth_estimateGas',[tx]);
+      const gas=BigInt(gasHex);
+      if(gas>300000n) throw new Error('Swap simulation estimated '+gas.toString()+' gas, above the 300,000 gas safety cap. No swap was sent.');
+
+      const gasLimit=(gas*115n)/100n;
+      const gasPrice=BigInt(await walletRequest('eth_gasPrice',[]));
+      const feeWei=gasLimit*gasPrice;
+      const feeCRO=Number(feeWei)/1e18;
+      if(feeWei>50000000000000000n) throw new Error('Estimated network fee is '+feeCRO.toFixed(6)+' CRO, above the 0.05 CRO safety limit for this small test. No swap was sent.');
+
+      showStatus('Swap simulation passed. Router quote: '+quotedDisplay+' CRO. Minimum received after 1% slippage: '+minDisplay+' CRO. Estimated network fee: '+feeCRO.toFixed(6)+' CRO. Opening wallet confirmation…');
+
+      const txHash=await walletRequest('eth_sendTransaction',[{
         from:walletAddress,
         to:ROUTER,
         data:data,
-        value:'0x0'
-      };
-
-      const gasHex=await walletRequest('eth_estimateGas',[tx]);
-      const gas=BigInt(gasHex);
-
-      if(gas > 300000n){
-        throw new Error(
-          'Simulation estimated '+gas.toString()+
-          ' gas, above the safety cap. No transaction was sent.'
-        );
-      }
-
-      showStatus(
-        'DIAGNOSTIC PASSED: BUCKX → CRO can simulate with minOut = 0. '+
-        'No transaction was sent. Estimated gas: '+gas.toString()+
-        '. The earlier failure was therefore related to the minimum-output requirement.'
-      );
+        value:'0x0',
+        gas:'0x'+gasLimit.toString(16)
+      }]);
+      showStatus('Swap submitted. Waiting for confirmation…');
+      await waitForReceipt(txHash);
+      showStatus('SWAP COMPLETE. '+amount+' BUCKX → approximately '+quotedDisplay+' CRO. Transaction: '+txHash);
     }else{
       const data=encodeSwapExactETHForTokens(
         minOut,path,walletAddress,nowDeadline()
@@ -511,25 +526,35 @@ async function executeSwap(){
         value:'0x'+input.toString(16)
       };
 
+      await walletRequest('eth_call',[tx,'latest']);
       const gasHex=await walletRequest('eth_estimateGas',[tx]);
       const gas=BigInt(gasHex);
+      if(gas>300000n) throw new Error('Swap simulation estimated '+gas.toString()+' gas, above the 300,000 gas safety cap. No swap was sent.');
 
-      if(gas > 300000n){
-        throw new Error(
-          'Simulation estimated '+gas.toString()+
-          ' gas, above the safety cap. No transaction was sent.'
-        );
-      }
+      const gasLimit=(gas*115n)/100n;
+      const gasPrice=BigInt(await walletRequest('eth_gasPrice',[]));
+      const feeWei=gasLimit*gasPrice;
+      const feeCRO=Number(feeWei)/1e18;
+      if(feeWei>50000000000000000n) throw new Error('Estimated network fee is '+feeCRO.toFixed(6)+' CRO, above the 0.05 CRO safety limit for this small test. No swap was sent.');
 
-      showStatus(
-        'DIAGNOSTIC PASSED: CRO → BUCKX can simulate with minOut = 0. '+
-        'No transaction was sent. Estimated gas: '+gas.toString()+'.'
-      );
+      showStatus('Swap simulation passed. Router quote: '+quotedDisplay+' BUCKX. Minimum received after 1% slippage: '+minDisplay+' BUCKX. Estimated network fee: '+feeCRO.toFixed(6)+' CRO. Opening wallet confirmation…');
+
+      const txHash=await walletRequest('eth_sendTransaction',[{
+        from:walletAddress,
+        to:ROUTER,
+        data:data,
+        value:'0x'+input.toString(16),
+        gas:'0x'+gasLimit.toString(16)
+      }]);
+      showStatus('Swap submitted. Waiting for confirmation…');
+      await waitForReceipt(txHash);
+      showStatus('SWAP COMPLETE. '+amount+' CRO → approximately '+quotedDisplay+' BUCKX. Transaction: '+txHash);
     }
   }catch(e){
-    showStatus('Simulation failed: '+(e.message||String(e))+' No transaction was sent.');
+    showStatus('Swap stopped: '+(e.message||String(e))+' No swap transaction was sent unless the wallet had already shown and you confirmed a transaction.');
   }finally{
     btn.disabled=false;
+    btn.textContent='Swap '+document.getElementById('fromToken').value+' → '+document.getElementById('toToken').value;
   }
 }
 
