@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LP Quote</title>
+<style>
+body{font-family:Arial,sans-serif;background:#111;color:#fff;padding:24px;max-width:560px;margin:auto}
+h1{font-size:28px}.box{background:#1d1d1d;border-radius:14px;padding:18px;margin-top:16px}
+input,button{width:100%;box-sizing:border-box;padding:14px;border-radius:10px;border:0;margin-top:10px;font-size:16px}
+button{font-weight:700;cursor:pointer}.muted{color:#aaa;font-size:13px;line-height:1.5;margin-top:10px}
+#result{font-size:21px;margin-top:16px;word-break:break-word}
+</style>
+</head>
+<body>
+<h1>BUCKX → CRO LP Quote</h1>
+<div class="box">
+<div>Amount of BUCKX</div>
+<input id="amount" type="number" value="8000" step="any">
+<button id="btn">Get Live LP Quote</button>
+<div id="result">Ready.</div>
+<div class="muted">
+Reads your pair directly from Cronos.<br>
+No wallet connection. No transaction.
+</div>
+</div>
+<script>
+const RPC="https://cronos-evm-rpc.publicnode.com";
+const PAIR="0x769E02Cb9899b86cdD13670da99c048A4f54F8AF";
+const BUCKX="0x58DC82669Ae64878cae2B8A0584179A6b33Bb3D2".toLowerCase();
+const WCRO="0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23".toLowerCase();
+
+async function rpcBatch(calls){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),10000);
+  try{
+    const r=await fetch(RPC,{
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify(calls),
+      signal:controller.signal
+    });
+    if(!r.ok) throw new Error("RPC HTTP "+r.status);
+    const j=await r.json();
+    if(!Array.isArray(j)) throw new Error("RPC returned an unexpected response");
+    const err=j.find(x=>x.error);
+    if(err) throw new Error(err.error.message||"RPC call failed");
+    return j;
+  }catch(e){
+    if(e.name==="AbortError") throw new Error("RPC timed out. Please tap the button again.");
+    throw e;
+  }finally{clearTimeout(timer)}
+}
+function wordResult(x){return x.result}
+function addr(hex){return "0x"+hex.slice(-40).toLowerCase()}
+function big(x){return BigInt(x)}
+async function quote(){
+  const out=document.getElementById("result");
+  out.textContent="Reading your LP…";
+  const n=Number(document.getElementById("amount").value);
+  if(!(n>0)){out.textContent="Enter an amount.";return}
+  try{
+    const calls=[
+      {jsonrpc:"2.0",id:1,method:"eth_call",params:[{to:PAIR,data:"0x0dfe1681"},"latest"]},
+      {jsonrpc:"2.0",id:2,method:"eth_call",params:[{to:PAIR,data:"0xd21220a7"},"latest"]},
+      {jsonrpc:"2.0",id:3,method:"eth_call",params:[{to:PAIR,data:"0x0902f1ac"},"latest"]}
+    ];
+    const res=await rpcBatch(calls);
+    const token0=addr(wordResult(res[0]));
+    const token1=addr(wordResult(res[1]));
+    const raw=wordResult(res[2]);
+    if(!raw || raw.length<258) throw new Error("Pool did not return reserves.");
+    const r0=big("0x"+raw.slice(2,66));
+    const r1=big("0x"+raw.slice(66,130));
+    let buck,wcro;
+    if(token0===BUCKX && token1===WCRO){buck=r0;wcro=r1}
+    else if(token0===WCRO && token1===BUCKX){buck=r1;wcro=r0}
+    else throw new Error("This pair is not the BUCKX/WCRO pair.");
+    const input=big(Math.floor(n*1e18));
+    const inputWithFee=input*997n;
+    const output=(inputWithFee*wcro)/(buck*1000n+inputWithFee);
+    const received=Number(output)/1e18;
+    const spot=Number(wcro)/Number(buck);
+    const spotOut=n*spot;
+    const impact=(1-received/spotOut)*100;
+    out.innerHTML=`<b>${n.toLocaleString()} BUCKX → ${received.toFixed(8)} WCRO (≈ CRO)</b>
+      <div class="muted">Spot before trade: 1 WCRO ≈ ${(1/spot).toLocaleString(undefined,{maximumFractionDigits:2})} BUCKX<br>
+      Estimated price impact: ${impact.toFixed(2)}%<br>
+      Fee assumption: 0.30%</div>`;
+  }catch(e){
+    out.innerHTML=`<b>Quote failed</b><div class="muted">${e.message}</div>`;
+  }
+}
+document.getElementById("btn").addEventListener("click",quote);
+</script>
+</body>
+</html>
