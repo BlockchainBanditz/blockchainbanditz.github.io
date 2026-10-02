@@ -101,7 +101,7 @@ main{position:relative;z-index:2;padding:55px 18px 80px}
       <div id="walletLine" class="wallet-line"></div>
       <button id="swapBtn" class="primary" type="button" disabled onclick="executeSwap()">Connect wallet to enable Swap</button>
       <div id="status" class="status"></div>
-      <p class="notice">Wallet connection is optional. A swap is only sent after you press Swap and approve it in your wallet. This build supports the tested BUCKX ↔ CRO LP route.</p>
+      <p class="notice">Wallet connection is optional. This diagnostic sends no swap transaction. It tests the BUCKX ↔ CRO route only.</p>
     </div>
   </section>
 
@@ -332,8 +332,8 @@ async function connectWallet(){
     document.getElementById('walletBtn').textContent='Wallet Connected';
     document.getElementById('walletLine').style.display='block';
     document.getElementById('walletLine').textContent=walletAddress;
-    showStatus('Wallet connected. Test build 2026-10-02-gas-cap. Your current quote is ready. Press Swap only when you want to start the test.');
-    const swapBtn=document.getElementById('swapBtn'); swapBtn.disabled=false; swapBtn.textContent='Swap 10 BUCKX → CRO';
+    showStatus('Wallet connected. Test build 2026-10-02-diagnostic. Your current quote is ready. Press Swap only when you want to start the test.');
+    const swapBtn=document.getElementById('swapBtn'); swapBtn.disabled=false; swapBtn.textContent='Diagnose 10 BUCKX → CRO';
   }catch(e){
     showStatus(e.message||String(e));
   }
@@ -439,73 +439,100 @@ async function executeSwap(){
     await connectWallet();
     if(!walletAddress) return;
   }
+
   const from=document.getElementById('fromToken').value;
   const to=document.getElementById('toToken').value;
   const amount=document.getElementById('fromAmount').value.trim();
-  if(!amount || Number(amount)<=0){showStatus('Enter an amount first.');return;}
+
+  if(!amount || Number(amount)<=0){
+    showStatus('Enter an amount first.');
+    return;
+  }
   if(!((from==='BUCKX'&&to==='CRO')||(from==='CRO'&&to==='BUCKX'))){
-    showStatus('Swap execution is currently enabled for BUCKX ↔ CRO only.');
+    showStatus('Diagnostic is currently enabled for BUCKX ↔ CRO only.');
     return;
   }
 
   const btn=document.getElementById('swapBtn');
   btn.disabled=true;
-  showStatus('Refreshing the quote and preparing the wallet transaction…');
+  showStatus('Running a simulation only — no transaction will be sent.');
+
   try{
     const input=unitsToBigInt(amount);
     const path=from==='BUCKX' ? [BUCKX,WCRO] : [WCRO,BUCKX];
     const quoted=await routerQuote(input,path);
-    // 1% slippage floor.
-    const minOut=quoted*(10000n-BigInt(SLIPPAGE_BPS))/10000n;
     lastQuoteWei=quoted;
     lastQuoteToken=to;
 
-    let txHash;
+    // IMPORTANT: minOut = 0 is used only for this diagnostic.
+    // The transaction is never sent.
+    const minOut=0n;
+
     if(from==='BUCKX'){
       const allowance=await tokenAllowance(walletAddress,ROUTER);
       if(allowance < input){
-        showStatus('Step 1 of 2: approve the BanditSwap route to spend your BUCKX. Confirm this in your wallet.');
-        txHash=await approveBuckx(input);
-        showStatus('Approval submitted. Wait for it to confirm, then the swap transaction will be requested.');
-        await waitForReceipt(txHash);
-      }else{
-        showStatus('Existing BUCKX approval is sufficient. Preparing the swap…');
+        showStatus('Diagnostic stopped: the router does not currently have enough BUCKX allowance. No transaction was sent.');
+        return;
       }
 
-      const data=encodeSwapExactTokensForETH(input,minOut,path,walletAddress,nowDeadline());
-      const tx={from:walletAddress,to:ROUTER,data:data,value:'0x0'};
-      const gas=await estimateAndCheckFee(tx);
-      showStatus('Swap estimated at about '+gas.feeCRO.toFixed(6)+' CRO network fee. Confirm the BUCKX → CRO swap in your wallet.');
-      txHash=await walletRequest('eth_sendTransaction',[{
+      const data=encodeSwapExactTokensForETH(
+        input,minOut,path,walletAddress,nowDeadline()
+      );
+      const tx={
         from:walletAddress,
         to:ROUTER,
         data:data,
-        value:'0x0',
-        gas:gas.gasLimit
-      }]);
-    }else{
-      const data=encodeSwapExactETHForTokens(minOut,path,walletAddress,nowDeadline());
-      const tx={from:walletAddress,to:ROUTER,data:data,value:'0x'+input.toString(16)};
-      const gas=await estimateAndCheckFee(tx);
-      showStatus('Swap estimated at about '+gas.feeCRO.toFixed(6)+' CRO network fee. Confirm the CRO → BUCKX swap in your wallet.');
-      txHash=await walletRequest('eth_sendTransaction',[{
-        from:walletAddress,
-        to:ROUTER,
-        data:data,
-        value:'0x'+input.toString(16),
-        gas:gas.gasLimit
-      }]);
-    }
+        value:'0x0'
+      };
 
-    showStatus('Swap transaction submitted. Waiting for confirmation…');
-    await waitForReceipt(txHash);
-    showStatus('Swap confirmed. Transaction: '+txHash);
+      const gasHex=await walletRequest('eth_estimateGas',[tx]);
+      const gas=BigInt(gasHex);
+
+      if(gas > 300000n){
+        throw new Error(
+          'Simulation estimated '+gas.toString()+
+          ' gas, above the safety cap. No transaction was sent.'
+        );
+      }
+
+      showStatus(
+        'DIAGNOSTIC PASSED: BUCKX → CRO can simulate with minOut = 0. '+
+        'No transaction was sent. Estimated gas: '+gas.toString()+
+        '. The earlier failure was therefore related to the minimum-output requirement.'
+      );
+    }else{
+      const data=encodeSwapExactETHForTokens(
+        minOut,path,walletAddress,nowDeadline()
+      );
+      const tx={
+        from:walletAddress,
+        to:ROUTER,
+        data:data,
+        value:'0x'+input.toString(16)
+      };
+
+      const gasHex=await walletRequest('eth_estimateGas',[tx]);
+      const gas=BigInt(gasHex);
+
+      if(gas > 300000n){
+        throw new Error(
+          'Simulation estimated '+gas.toString()+
+          ' gas, above the safety cap. No transaction was sent.'
+        );
+      }
+
+      showStatus(
+        'DIAGNOSTIC PASSED: CRO → BUCKX can simulate with minOut = 0. '+
+        'No transaction was sent. Estimated gas: '+gas.toString()+'.'
+      );
+    }
   }catch(e){
-    showStatus(e.message||String(e));
+    showStatus('Simulation failed: '+(e.message||String(e))+' No transaction was sent.');
   }finally{
     btn.disabled=false;
   }
 }
+
 
 async function waitForReceipt(hash){
   for(let i=0;i<60;i++){
