@@ -331,8 +331,8 @@ async function connectWallet(){
     document.getElementById('walletBtn').textContent='Wallet Connected';
     document.getElementById('walletLine').style.display='block';
     document.getElementById('walletLine').textContent=walletAddress;
-    showStatus('Wallet connected. Get a fresh quote, then press Swap when you are ready.');
-    document.getElementById('swapBtn').style.display='none';
+    showStatus('Wallet connected. Your current quote is ready. Press Swap only when you want to start the test.');
+    document.getElementById('swapBtn').style.display='block';
   }catch(e){
     showStatus(e.message||String(e));
   }
