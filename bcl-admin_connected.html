@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BCL Admin</title>
+<style>
+body{margin:0;background:#090909;color:#fff;font-family:Arial,sans-serif;padding:18px}
+.wrap{max-width:700px;margin:auto}
+h1,h2{color:#f5d97a}
+.card{background:#151515;border:1px solid #6f5a20;border-radius:14px;padding:16px;margin:14px 0}
+input,select,button{width:100%;box-sizing:border-box;padding:12px;margin:6px 0;border-radius:10px;font:inherit}
+input,select{background:#0d0d0d;color:#fff;border:1px solid #555}
+button{background:linear-gradient(135deg,#d4af37,#f9e27d);border:0;font-weight:bold;color:#090909}
+button.danger{background:#351010;color:#ffb0b0;border:1px solid #803030}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.small{font-size:12px;color:#aaa;line-height:1.5}
+.item{border-top:1px solid #333;padding:12px 0}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>BCL Admin</h1>
+
+<div id="login" class="card">
+<h2>Admin login</h2>
+<input id="email" type="email" placeholder="Admin email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Sign in</button>
+<div id="loginStatus" class="small"></div>
+</div>
+
+<div id="app" class="hidden">
+<div class="card">
+<button onclick="logout()">Sign out</button>
+<p class="small">Only authenticated BCL admins can change teams and player assignments.</p>
+</div>
+
+<div class="card">
+<h2>Add team</h2>
+<input id="teamName" placeholder="Team name">
+<button onclick="addTeam()">Add team</button>
+</div>
+
+<div class="card">
+<h2>Teams</h2>
+<div id="teams"></div>
+</div>
+
+<div class="card">
+<h2>Assign player</h2>
+<input id="wallet" placeholder="0x wallet address">
+<select id="teamSelect"></select>
+<select id="role">
+<option value="member">Team Member</option>
+<option value="leader">Team Leader</option>
+</select>
+<button onclick="savePlayer()">Save player</button>
+<div id="playerStatus" class="small"></div>
+</div>
+
+<div class="card">
+<h2>Assigned players</h2>
+<div id="players"></div>
+</div>
+</div>
+</div>
+
+<script>
+const BCL_ADMIN_CONFIG={
+  supabaseUrl:'https://joajfrpwqshosylsqkyj.supabase.co',
+  supabaseAnonKey:'sb_publishable_ZKE3X2XS9_raIts6jGb9Lg_DnXW-E82'
+};
+const S=BCL_ADMIN_CONFIG.supabaseUrl;
+const K=BCL_ADMIN_CONFIG.supabaseAnonKey;
+let teams=[], players=[];
+
+function headers(json=true){
+  const h={'apikey':K};
+  if(json)h['Content-Type']='application/json';
+  return h;
+}
+async function api(path,opts={}){
+  const res=await fetch(S+path,{
+    ...opts,
+    headers:{...headers(!!opts.body),...(opts.headers||{})}
+  });
+  const data=await res.json().catch(()=>null);
+  if(!res.ok)throw new Error(data?.message||data?.error_description||data?.error||'Request failed');
+  return data;
+}
+async function session(){
+  return api('/auth/v1/user',{headers:{'Authorization':'Bearer '+localStorage.bclAccessToken}});
+}
+async function login(){
+  try{
+    const email=document.getElementById('email').value.trim();
+    const password=document.getElementById('password').value;
+    const r=await fetch(S+'/auth/v1/token?grant_type=password',{
+      method:'POST',headers:{'Content-Type':'application/json','apikey':K},
+      body:JSON.stringify({email,password})
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error_description||d.msg||'Login failed');
+    localStorage.bclAccessToken=d.access_token;
+    await start();
+  }catch(e){document.getElementById('loginStatus').textContent=e.message;}
+}
+async function start(){
+  try{
+    const u=await session();
+    const q=await api('/rest/v1/bcl_admins?select=user_id&user_id=eq.'+encodeURIComponent(u.id),{
+      headers:{'Authorization':'Bearer '+localStorage.bclAccessToken}
+    });
+    if(!q.length)throw new Error('This account is not a BCL admin.');
+    document.getElementById('login').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    await load();
+  }catch(e){
+    localStorage.removeItem('bclAccessToken');
+    document.getElementById('loginStatus').textContent=e.message;
+  }
+}
+async function load(){
+  const auth={'Authorization':'Bearer '+localStorage.bclAccessToken};
+  teams=await api('/rest/v1/bcl_teams?select=*&order=name',{headers:auth});
+  players=await api('/rest/v1/bcl_players?select=*,bcl_teams(name)&order=created_at.desc',{headers:auth});
+  render();
+}
+function render(){
+  document.getElementById('teamSelect').innerHTML=teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  document.getElementById('teams').innerHTML=teams.map(t=>`
+    <div class="item">
+      <b>${esc(t.name)}</b>
+      <button onclick="renameTeam('${t.id}')">Rename</button>
+      <button class="danger" onclick="deleteTeam('${t.id}')">Delete</button>
+    </div>`).join('')||'<div class="small">No teams yet.</div>';
+  document.getElementById('players').innerHTML=players.map(p=>`
+    <div class="item">
+      <b>${esc(p.wallet_address)}</b><br>
+      ${esc(p.bcl_teams?.name||'')} · ${p.role==='leader'?'Team Leader':'Team Member'}
+      <button onclick="editPlayer('${p.id}')">Edit</button>
+      <button class="danger" onclick="removePlayer('${p.id}')">Remove</button>
+    </div>`).join('')||'<div class="small">No assigned players yet.</div>';
+}
+function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function addTeam(){
+  try{
+    const name=document.getElementById('teamName').value.trim();
+    if(!name)throw new Error('Enter a team name.');
+    await api('/rest/v1/bcl_teams',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.bclAccessToken,'Prefer':'return=minimal'},body:JSON.stringify({name})});
+    document.getElementById('teamName').value='';
+    await load();
+  }catch(e){alert(e.message);}
+}
+async function renameTeam(id){
+  const old=teams.find(t=>t.id===id);
+  const name=prompt('New team name:',old?.name||'');
+  if(!name)return;
+  try{
+    await api('/rest/v1/bcl_teams?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.bclAccessToken,'Prefer':'return=minimal'},body:JSON.stringify({name:name.trim()})});
+    await load();
+  }catch(e){alert(e.message);}
+}
+async function deleteTeam(id){
+  if(!confirm('Delete this team? Assigned players on this team will also be removed.'))return;
+  try{
+    await api('/rest/v1/bcl_teams?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.bclAccessToken}});
+    await load();
+  }catch(e){alert(e.message);}
+}
+async function savePlayer(){
+  try{
+    const wallet=document.getElementById('wallet').value.trim().toLowerCase();
+    const team_id=document.getElementById('teamSelect').value;
+    const role=document.getElementById('role').value;
+    if(!/^0x[a-f0-9]{40}$/.test(wallet))throw new Error('Enter a valid 0x wallet address.');
+    if(!team_id)throw new Error('Create a team first.');
+    const existing=players.find(p=>p.wallet_address.toLowerCase()===wallet);
+    if(existing){
+      await api('/rest/v1/bcl_players?id=eq.'+encodeURIComponent(existing.id),{method:'PATCH',headers:{'Authorization':'Bearer '+localStorage.bclAccessToken,'Prefer':'return=minimal'},body:JSON.stringify({team_id,role})});
+    }else{
+      await api('/rest/v1/bcl_players',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.bclAccessToken,'Prefer':'return=minimal'},body:JSON.stringify({wallet_address:wallet,team_id,role})});
+    }
+    document.getElementById('playerStatus').textContent='Player saved.';
+    document.getElementById('wallet').value='';
+    await load();
+  }catch(e){document.getElementById('playerStatus').textContent=e.message;}
+}
+function editPlayer(id){
+  const p=players.find(x=>x.id===id);if(!p)return;
+  document.getElementById('wallet').value=p.wallet_address;
+  document.getElementById('teamSelect').value=p.team_id;
+  document.getElementById('role').value=p.role;
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+async function removePlayer(id){
+  if(!confirm('Remove this wallet from its BCL team?'))return;
+  try{
+    await api('/rest/v1/bcl_players?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.bclAccessToken}});
+    await load();
+  }catch(e){alert(e.message);}
+}
+async function logout(){
+  try{await fetch(S+'/auth/v1/logout',{method:'POST',headers:{'apikey':K,'Authorization':'Bearer '+localStorage.bclAccessToken}})}catch(e){}
+  localStorage.removeItem('bclAccessToken');location.reload();
+}
+if(localStorage.bclAccessToken)start();
+</script>
+</body>
+</html>
