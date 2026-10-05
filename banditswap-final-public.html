@@ -1,92 +1,2733 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>BanditSwap — Blockchain Banditz</title>
-<link href="https://fonts.cdnfonts.com/css/sprite-graffiti" rel="stylesheet">
-<style>
+<title>BanditSwap — Blockchain Banditz</title><link href="https://fonts.cdnfonts.com/css/sprite-graffiti" rel="stylesheet"><style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-:root{--gold:#d4af37;--gold2:#f9e27d;--bg:#000;--panel:#101010;--muted:#aaa;--line:rgba(212,175,55,.35)}
-*{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:Poppins,sans-serif;background:radial-gradient(circle at 20% 20%,rgba(212,175,55,.1),transparent 32%),radial-gradient(circle at 80% 80%,rgba(255,255,255,.05),transparent 30%),#000;color:#fff;overflow-x:hidden} header{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 28px;border-bottom:1px solid var(--line)} .logo{font-family:'Sprite Graffiti',cursive;font-size:25px;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}.nav{display:flex;gap:8px;flex-wrap:wrap}.nav a{color:#fff;text-decoration:none;border:1px solid var(--line);padding:9px 13px;border-radius:999px;font-size:12px}.wrap{max-width:760px;margin:38px auto;padding:0 18px}.hero{text-align:center;margin-bottom:25px}.hero h1{font-size:42px;margin:0 0 8px;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}.hero p{color:var(--muted);margin:0}.panel{background:rgba(16,16,16,.96);border:1px solid var(--line);border-radius:26px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35)}.token-box{background:#181818;border:1px solid #333;border-radius:18px;padding:15px;margin:8px 0}.row{display:flex;align-items:center;gap:10px}.label{font-size:12px;color:#999}.amount{width:100%;background:none;border:0;outline:0;color:#fff;font-size:30px;font-weight:600;min-width:0}.token-select{background:#0d0d0d;color:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;max-width:190px}.arrow{text-align:center}.arrow button,.primary,.secondary,.danger{border:1px solid var(--line);border-radius:16px;padding:14px 18px;font-weight:700;cursor:pointer}.arrow button{background:#111;color:#f9e27d}.primary{width:100%;margin-top:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-size:16px}.secondary{width:100%;margin-top:10px;background:#111;color:#f9e27d}.danger{background:#190d0d;color:#ffb3b3;border-color:#633}.status,.quote,.review{display:none;margin-top:14px;border:1px solid var(--line);border-radius:16px;padding:15px;color:#ddd}.review{background:#121212}.review h3{color:#f9e27d;margin:0 0 12px}.review .line{display:flex;justify-content:space-between;gap:15px;margin:8px 0}.review small{color:#999}.wallet{margin-top:14px;text-align:center;color:#aaa;font-size:12px;word-break:break-all}.admin{margin-top:22px}.admin h2{margin-bottom:6px}.admin-note{color:#999;font-size:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field input{width:100%;padding:12px;background:#090909;border:1px solid #333;border-radius:12px;color:#fff}.token-list{margin-top:10px}.token-item{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #292929;padding:10px 0;font-size:12px}.badge{color:#f9e27d}.foot{text-align:center;color:#777;font-size:11px;margin:25px 0}.ok{color:#9be59b}.warn{color:#ffd27a}@media(max-width:620px){header{padding:16px}.wrap{margin-top:25px}.hero h1{font-size:34px}.grid{grid-template-columns:1fr}.row{align-items:stretch}.token-select{max-width:150px}.amount{font-size:25px}}
-</style>
-</head>
-<body>
-<header><div class="logo">BanditSwap</div><nav class="nav"><a href="index.html">Home</a><a href="banditswap.html">BanditSwap</a></nav></header>
-<main class="wrap">
-<section class="hero"><h1>BanditSwap</h1><p>Direct Cronos swaps through the VVS V2 router.</p></section>
-<section class="panel">
-  <button id="walletBtn" class="secondary" onclick="connectWallet()">Connect Wallet</button>
-  <div id="walletLine" class="wallet" style="display:none"></div>
-  <div class="token-box"><div class="row"><span class="label">You pay</span><span class="label" id="fromBalance" style="margin-left:auto">Balance —</span></div><div class="row"><input id="fromAmount" class="amount" inputmode="decimal" placeholder="0.0"><select id="fromToken" class="token-select"></select></div></div>
-  <div class="arrow"><button type="button" onclick="flipTokens()">↕</button></div>
-  <div class="token-box"><div class="row"><span class="label">You receive</span><span class="label" id="toBalance" style="margin-left:auto">Balance —</span></div><div class="row"><input id="toAmount" class="amount" placeholder="0.0" readonly><select id="toToken" class="token-select"></select></div></div>
-  <button id="quoteBtn" class="secondary" onclick="refreshQuote()">Get Live Quote</button>
-  <button id="swapBtn" class="primary" onclick="prepareSwap()">Prepare Swap</button>
-  <div id="quoteBox" class="quote"></div>
-  <div id="status" class="status"></div>
-  <div id="review" class="review"></div>
-  <button id="continueBtn" class="primary" style="display:none" onclick="continueToWallet()">Continue to Wallet</button>
-  <p class="foot">No transaction is sent until you approve the final wallet confirmation. Token approvals are requested only when needed.</p>
-</section>
-</main>
-<script>
-const RPC='https://evm.cronos.com';
-const ROUTER='0x145863Eb42Cf62847A6Ca784e6416C1682b1b2Ae';
-const WCRO='0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23'.toLowerCase();
-const CHAIN_ID='0x19'; const SLIPPAGE_BPS=100; const DEADLINE_SECONDS=1200;
-const PROJECT_REPO_NOTE='BanditSwap';
-const starterTokens=[
-{name:'Cronos',symbol:'CRO',address:'native',decimals:18},
-{name:'BUCKX',symbol:'BUCKX',address:'0x58DC82669Ae64878cae2B8A0584179A6b33Bb3D2',decimals:18},
-{name:'USD Coin (native)',symbol:'USDC',address:'0x3D7F2C478aAfdB65542BCB44bCeeC05849999d2D',decimals:6},
-{name:'USD Coin (bridged)',symbol:'USDC.e',address:'0xc21223249CA28397B4B6541dfFaEcC539BfF0c59',decimals:6},
-{name:'Tether USD',symbol:'USDT',address:'0x66e428c3f67a68878562e79A0234c1F83c208770',decimals:6},
-{name:'Wrapped Ether',symbol:'WETH',address:'0xe44Fd7fCb2b1581822D0c862B68222998a0c299a',decimals:18},
-{name:'Wrapped Bitcoin',symbol:'WBTC',address:'0x062E66477Faf219F25D27dCED647BF57C3107d52',decimals:8},
-{name:'VVS',symbol:'VVS',address:'0x2D03bECE6747ADC00E1a131BBA1469C15fD11e03',decimals:18}
+
+:root{
+  --gold:#d4af37;
+  --gold2:#f9e27d;
+  --bg:#000;
+  --panel:#101010;
+  --muted:#aaa;
+  --line:rgba(212,175,55,.35)
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Poppins,sans-serif;
+  background:
+    radial-gradient(circle at 20% 20%,rgba(212,175,55,.1),transparent 32%),
+    radial-gradient(circle at 80% 80%,rgba(255,255,255,.05),transparent 30%),
+    #000;
+  color:#fff;
+  overflow-x:hidden
+}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  padding:20px 28px;
+  border-bottom:1px solid var(--line)
+}
+
+.logo{
+  font-family:'Sprite Graffiti',cursive;
+  font-size:25px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent
+}
+
+.nav{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap
+}
+
+.nav a{
+  color:#fff;
+  text-decoration:none;
+  border:1px solid var(--line);
+  padding:9px 13px;
+  border-radius:999px;
+  font-size:12px
+}
+
+.wrap{
+  max-width:760px;
+  margin:38px auto;
+  padding:0 18px
+}
+
+.hero{
+  text-align:center;
+  margin-bottom:25px
+}
+
+.hero h1{
+  font-size:42px;
+  margin:0 0 8px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent
+}
+
+.hero p{
+  color:var(--muted);
+  margin:0
+}
+
+.panel{
+  background:rgba(16,16,16,.96);
+  border:1px solid var(--line);
+  border-radius:26px;
+  padding:22px;
+  box-shadow:0 20px 60px rgba(0,0,0,.35)
+}
+
+.token-box{
+  background:#181818;
+  border:1px solid #333;
+  border-radius:18px;
+  padding:15px;
+  margin:8px 0
+}
+
+.row{
+  display:flex;
+  align-items:center;
+  gap:10px
+}
+
+.label{
+  font-size:12px;
+  color:#999
+}
+
+.amount{
+  width:100%;
+  background:none;
+  border:0;
+  outline:0;
+  color:#fff;
+  font-size:30px;
+  font-weight:600;
+  min-width:0
+}
+
+.token-select{
+  background:#0d0d0d;
+  color:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  max-width:190px
+}
+
+.arrow{
+  text-align:center
+}
+
+.arrow button,
+.primary,
+.secondary,
+.danger,
+.adminBtn{
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px 18px;
+  font-weight:700;
+  cursor:pointer
+}
+
+.arrow button{
+  background:#111;
+  color:#f9e27d
+}
+
+.primary{
+  width:100%;
+  margin-top:14px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#000;
+  font-size:16px
+}
+
+.secondary{
+  width:100%;
+  margin-top:10px;
+  background:#111;
+  color:#f9e27d
+}
+
+.danger{
+  background:#190d0d;
+  color:#ffb3b3;
+  border-color:#633
+}
+
+.status,
+.quote,
+.review{
+  display:none;
+  margin-top:14px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:15px;
+  color:#ddd
+}
+
+.review{
+  background:#121212
+}
+
+.review h3{
+  color:#f9e27d;
+  margin:0 0 12px
+}
+
+.review .line{
+  display:flex;
+  justify-content:space-between;
+  gap:15px;
+  margin:8px 0
+}
+
+.review small{
+  color:#999
+}
+
+.wallet{
+  margin-top:14px;
+  text-align:center;
+  color:#aaa;
+  font-size:12px;
+  word-break:break-all
+}
+
+/* ADMIN */
+
+.admin-toggle{
+  width:100%;
+  margin-top:18px;
+  background:#0b0b0b;
+  color:#777;
+  border:1px solid #292929;
+  border-radius:12px;
+  padding:9px;
+  font-size:10px;
+  cursor:pointer
+}
+
+.admin-login{
+  display:none;
+  margin-top:12px;
+  padding:15px;
+  background:#0b0b0b;
+  border:1px solid #333;
+  border-radius:16px
+}
+
+.admin-login input{
+  width:100%;
+  padding:12px;
+  background:#090909;
+  border:1px solid #333;
+  border-radius:12px;
+  color:#fff;
+  margin-top:8px
+}
+
+.admin{
+  display:none;
+  margin-top:18px;
+  padding:18px;
+  background:#0b0b0b;
+  border:1px solid var(--line);
+  border-radius:18px
+}
+
+.admin h2{
+  margin:0 0 6px;
+  color:#f9e27d
+}
+
+.admin-note{
+  color:#888;
+  font-size:11px;
+  line-height:1.6
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:15px
+}
+
+.field input{
+  width:100%;
+  padding:12px;
+  background:#090909;
+  border:1px solid #333;
+  border-radius:12px;
+  color:#fff;
+  margin-top:5px
+}
+
+.admin-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:14px
+}
+
+.adminBtn{
+  background:#111;
+  color:#f9e27d
+}
+
+.adminBtn.small{
+  padding:8px 10px;
+  font-size:11px
+}
+
+.token-list{
+  margin-top:15px
+}
+
+.token-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  border-bottom:1px solid #292929;
+  padding:10px 0;
+  font-size:12px
+}
+
+.token-item-info{
+  min-width:0
+}
+
+.token-item-address{
+  color:#777;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  max-width:420px
+}
+
+.badge{
+  color:#f9e27d
+}
+
+.foot{
+  text-align:center;
+  color:#777;
+  font-size:11px;
+  margin:25px 0
+}
+
+.ok{
+  color:#9be59b
+}
+
+.warn{
+  color:#ffd27a
+}
+
+@media(max-width:620px){
+
+  header{
+    padding:16px
+  }
+
+  .wrap{
+    margin-top:25px
+  }
+
+  .hero h1{
+    font-size:34px
+  }
+
+  .grid{
+    grid-template-columns:1fr
+  }
+
+  .row{
+    align-items:stretch
+  }
+
+  .token-select{
+    max-width:150px
+  }
+
+  .amount{
+    font-size:25px
+  }
+
+  .token-item-address{
+    max-width:220px
+  }
+}
+</style></head><body><header>
+  <div class="logo">BanditSwap</div>  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="banditswap.html">BanditSwap</a>
+  </nav>
+</header><main class="wrap"><section class="hero">
+  <h1>BanditSwap</h1>
+  <p>Direct Cronos swaps through the VVS V2 router.</p>
+</section><section class="panel"><button id="walletBtn"
+class="secondary"
+onclick="connectWallet()">
+Connect Wallet
+</button>
+
+<div id="walletLine"
+     class="wallet"
+     style="display:none">
+</div><!-- PAY TOKEN --><div class="token-box">  <div class="row"><span class="label">
+  You pay
+</span>
+
+<span class="label"
+      id="fromBalance"
+      style="margin-left:auto">
+  Balance —
+</span>
+
+  </div>  <div class="row"><input
+  id="fromAmount"
+  class="amount"
+  inputmode="decimal"
+  placeholder="0.0">
+
+<select
+  id="fromToken"
+  class="token-select">
+</select>
+
+  </div></div><div class="arrow">
+  <button
+    type="button"
+    onclick="flipTokens()">
+    ↕
+  </button>
+</div><!-- RECEIVE TOKEN --><div class="token-box">  <div class="row"><span class="label">
+  You receive
+</span>
+
+<span class="label"
+      id="toBalance"
+      style="margin-left:auto">
+  Balance —
+</span>
+
+  </div>  <div class="row"><input
+  id="toAmount"
+  class="amount"
+  placeholder="0.0"
+  readonly>
+
+<select
+  id="toToken"
+  class="token-select">
+</select>
+
+  </div></div><button
+id="quoteBtn"
+class="secondary"
+onclick="refreshQuote()">
+Get Live Quote
+</button>
+
+<button
+id="swapBtn"
+class="primary"
+onclick="prepareSwap()">
+Prepare Swap
+</button>
+
+<div id="quoteBox"
+     class="quote">
+</div><div id="status"
+     class="status">
+</div><div id="review"
+     class="review">
+</div><button
+id="continueBtn"
+class="primary"
+style="display:none"
+onclick="continueToWallet()">
+Continue to Wallet
+</button>
+
+<p class="foot">
+No transaction is sent until you approve the final wallet confirmation.
+Token approvals are requested only when needed.
+</p><!-- =====================================================
+     ADMIN PANEL
+     ===================================================== --><button
+id="adminToggle"
+class="admin-toggle"
+type="button"
+onclick="toggleAdminLogin()">
+Admin
+</button>
+
+<div
+  id="adminLogin"
+  class="admin-login">  <div class="label">
+    Administrator access
+  </div><input
+id="adminPassword"
+type="password"
+placeholder="Admin password"
+autocomplete="off">
+
+<button
+class="adminBtn"
+type="button"
+style="margin-top:8px"
+onclick="unlockAdmin()">
+Unlock Admin Panel
+</button>
+
+  <div
+    id="adminLoginMsg"
+    class="warn"
+    style="margin-top:8px">
+  </div></div><section
+  id="adminPanel"
+  class="admin">  <h2>
+    Admin Panel
+  </h2>  <div class="admin-note">Add or remove tokens from the BanditSwap whitelist.
+This list is only visible here to the administrator.
+
+  </div>  <div class="grid"><div class="field">
+
+  <div class="label">
+    Token name
+  </div>
+
+  <input
+    id="newName"
+    placeholder="CorgiAI">
+
+</div>
+
+
+<div class="field">
+
+  <div class="label">
+    Symbol
+  </div>
+
+  <input
+    id="newSymbol"
+    placeholder="CORGIAI">
+
+</div>
+
+
+<div
+  class="field"
+  style="grid-column:1/-1">
+
+  <div class="label">
+    Cronos contract address
+  </div>
+
+  <input
+    id="newAddress"
+    placeholder="0x...">
+
+</div>
+
+
+<div class="field">
+
+  <div class="label">
+    Decimals
+  </div>
+
+  <input
+    id="newDecimals"
+    type="number"
+    value="18"
+    min="0"
+    max="36">
+
+</div>
+
+  </div>  <div class="admin-actions"><button
+  class="primary"
+  style="width:auto;margin-top:0"
+  type="button"
+  onclick="addToken()">
+  Add Token
+</button>
+
+
+<button
+  class="adminBtn"
+  type="button"
+  onclick="downloadTokenFile()">
+  Download Token List
+</button>
+
+
+<button
+  class="adminBtn"
+  type="button"
+  onclick="lockAdmin()">
+  Lock
+</button>
+
+  </div>  <div
+    id="adminMsg"
+    class="status">
+  </div>  <div
+    id="adminTokenList"
+    class="token-list">
+  </div>  <div
+    class="admin-note"
+    style="margin-top:14px">After adding or removing tokens, download the token list
+and upload the downloaded
+<b>banditswap-tokens.json</b>
+file to your GitHub Pages BanditSwap folder.
+
+  </div></section></section>
+</main><script>
+
+/* =====================================================
+   CORE BANDITSWAP SETTINGS
+   ===================================================== */
+
+const RPC =
+'https://evm.cronos.com';
+
+const ROUTER =
+'0x145863Eb42Cf62847A6Ca784e6416C1682b1b2Ae';
+
+const WCRO =
+'0x5C7F8A570d578ED84E63fdFA7b1eE72dEae1AE23'
+.toLowerCase();
+
+const CHAIN_ID =
+'0x19';
+
+const SLIPPAGE_BPS =
+100;
+
+const DEADLINE_SECONDS =
+1200;
+
+
+/* =====================================================
+   ADMIN PASSWORD
+   =====================================================
+
+   Change this password if you want.
+
+   IMPORTANT:
+   Because this is a static GitHub Pages site,
+   this is only a basic admin gate, NOT secure
+   server-side authentication.
+
+   Never put a GitHub access token in this HTML.
+   ===================================================== */
+
+const ADMIN_PASSWORD =
+'BanditAdmin2026';
+
+
+/* =====================================================
+   PERMANENT STARTER TOKENS
+   ===================================================== */
+
+const starterTokens = [
+
+{
+  name:'Cronos',
+  symbol:'CRO',
+  address:'native',
+  decimals:18
+},
+
+{
+  name:'BUCKX',
+  symbol:'BUCKX',
+  address:'0x58DC82669Ae64878cae2B8A0584179A6b33Bb3D2',
+  decimals:18
+},
+
+{
+  name:'USD Coin (native)',
+  symbol:'USDC',
+  address:'0x3D7F2C478aAfdB65542BCB44bCeeC05849999d2D',
+  decimals:6
+},
+
+{
+  name:'USD Coin (bridged)',
+  symbol:'USDC.e',
+  address:'0xc21223249CA28397B4B6541dfFaEcC539BfF0c59',
+  decimals:6
+},
+
+{
+  name:'Tether USD',
+  symbol:'USDT',
+  address:'0x66e428c3f67a68878562e79A0234c1F83c208770',
+  decimals:6
+},
+
+{
+  name:'Wrapped Ether',
+  symbol:'WETH',
+  address:'0xe44Fd7fCb2b1581822D0c862B68222998a0c299a',
+  decimals:18
+},
+
+{
+  name:'Wrapped Bitcoin',
+  symbol:'WBTC',
+  address:'0x062E66477Faf219F25D27dCED647BF57C3107d52',
+  decimals:8
+},
+
+{
+  name:'VVS',
+  symbol:'VVS',
+  address:'0x2D03bECE6747ADC00E1a131BBA1469C15fD11e03',
+  decimals:18
+}
+
 ];
-let walletProvider=null,walletAddress=null,pending=null,lastPath=null,lastQuote=null;
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-let publicTokens=[];
-function tokens(){return starterTokens.concat(Array.isArray(publicTokens)?publicTokens:[])}
-function populate(){let ts=tokens(),a=document.getElementById('fromToken'),b=document.getElementById('toToken');a.innerHTML=b.innerHTML='';ts.forEach(t=>{a.add(new Option(t.symbol+' — '+t.name,t.symbol));b.add(new Option(t.symbol+' — '+t.name,t.symbol))});a.value='CRO';b.value='BUCKX';}
-async function loadPublicTokens(){try{let r=await fetch('./banditswap-tokens.json',{cache:'no-store'});if(!r.ok)throw new Error('Token list unavailable');let x=await r.json();publicTokens=Array.isArray(x)?x:(Array.isArray(x.tokens)?x.tokens:[]);populate();}catch(e){populate();}}
-function flipTokens(){let a=fromToken.value,b=toToken.value;fromToken.value=b;toToken.value=a;clearPrepared();}
-function show(t){let e=document.getElementById('status');e.style.display='block';e.textContent=t}
-function clearPrepared(){pending=null;review.style.display='none';continueBtn.style.display='none';toAmount.value='';}
-function pad(x){return String(x).replace(/^0x/,'').padStart(64,'0')}
-function addr(a){return pad(a)} function uint(x){return pad(BigInt(x).toString(16))}
-function deadline(){return BigInt(Math.floor(Date.now()/1000)+DEADLINE_SECONDS)}
-async function rpc(method,params=[]){let r=await fetch(RPC,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:Date.now(),method,params})});let j=await r.json();if(j.error)throw Error(j.error.message||method+' failed');return j.result}
-async function call(to,data){return rpc('eth_call',[{to,data},'latest'])}
-function selector(sig){return sig}
-function encodePath(path,offset){return pad(offset)+uint(path.length)+path.map(addr).join('')}
-function encodeGetAmountsOut(amount,path){return '0xd06ca61f'+uint(amount)+encodePath(path,'40')}
-async function routerQuote(amount,path){let raw=await call(ROUTER,encodeGetAmountsOut(amount,path));let len=parseInt(raw.slice(66,130),16);if(!len)throw Error('No VVS route for this pair.');return BigInt('0x'+raw.slice(130,194))}
-function meta(symbol){let t=tokens().find(x=>x.symbol===symbol);if(!t)throw Error('Token not found.');return t}
-async function decimalsOf(t){if(t.address==='native')return 18;if(t.decimals!=null)return Number(t.decimals);let raw=await call(t.address,'0x313ce567');let d=Number(BigInt(raw));t.decimals=d;try{let x=JSON.parse(localStorage.getItem('banditSwapTokens')||'[]');let i=x.findIndex(y=>y.address.toLowerCase()===t.address.toLowerCase());if(i>=0){x[i].decimals=d;localStorage.setItem('banditSwapTokens',JSON.stringify(x))}}catch{}return d}
-function parseUnits(s,d){s=String(s).trim();if(!/^\d+(\.\d+)?$/.test(s))throw Error('Enter a valid amount.');let [w,f='']=s.split('.');if(f.length>d)throw Error('Too many decimal places for this token.');return BigInt(w)*(10n**BigInt(d))+BigInt((f+'0'.repeat(d)).slice(0,d))}
-function formatUnits(v,d){let n=BigInt(v),base=10n**BigInt(d),w=n/base,f=(n%base).toString().padStart(d,'0').replace(/0+$/,'');return f?w+'.'+f:w.toString()}
-function bestPath(from,to){let f=meta(from),t=meta(to);if(f.address==='native'&&t.address==='native')throw Error('Choose two different tokens.');if(f.address==='native')return [[WCRO,t.address.toLowerCase()]];if(t.address==='native')return [[f.address.toLowerCase(),WCRO]];if(f.address.toLowerCase()===t.address.toLowerCase())throw Error('Choose two different tokens.');return [[f.address.toLowerCase(),t.address.toLowerCase()],[f.address.toLowerCase(),WCRO,t.address.toLowerCase()]]}
-async function bestQuote(amount,paths){let best=null;for(let p of paths){try{let q=await routerQuote(amount,p);if(q>0n&&(!best||q>best.q))best={q,path:p}}catch{}}if(!best)throw Error('VVS could not find a route for this pair.');return best}
-function fmtAmount(v,d){return formatUnits(v,d)}
-async function refreshQuote(){clearPrepared();let amount=fromAmount.value.trim(),f=fromToken.value,t=toToken.value;if(!amount||Number(amount)<=0){show('Enter an amount first.');return}try{let fm=meta(f),tm=meta(t),fd=await decimalsOf(fm),td=await decimalsOf(tm),input=parseUnits(amount,fd),paths=bestPath(f,t),best=await bestQuote(input,paths);lastPath=best.path;lastQuote=best.q;toAmount.value=fmtAmount(best.q,td);quoteBox.style.display='block';quoteBox.innerHTML='<b>Live VVS router quote</b><br>'+esc(amount)+' '+esc(f)+' → '+esc(fmtAmount(best.q,td))+' '+esc(t)+'<br><small>Route: '+esc(best.path.map(x=>x===WCRO?'WCRO':x).join(' → '))+' • same router used for execution • no transaction sent.</small>';show('Quote ready.');}catch(e){quoteBox.style.display='block';quoteBox.innerHTML='<b>Quote failed</b><br>'+esc(e.message);show('No transaction was sent.');}}
-async function connectWallet(){if(!window.ethereum){show('No injected wallet detected. Open this page in MetaMask or Crypto.com Onchain Wallet.');return}try{walletProvider=window.ethereum;let c=await walletProvider.request({method:'eth_chainId'});if(c.toLowerCase()!==CHAIN_ID)await walletProvider.request({method:'wallet_switchEthereumChain',params:[{chainId:CHAIN_ID}]});let a=await walletProvider.request({method:'eth_requestAccounts'});walletAddress=a[0];walletBtn.textContent='Wallet Connected';walletLine.style.display='block';walletLine.textContent=walletAddress;show('Wallet connected on Cronos Mainnet.');}catch(e){show(e.message||String(e))}}
-async function wreq(method,params=[]){if(!walletProvider)throw Error('Connect your wallet first.');return walletProvider.request({method,params})}
-async function balance(t){if(!walletAddress)return null;if(t.address==='native')return BigInt(await wreq('eth_getBalance',[walletAddress,'latest']));return BigInt(await wreq('eth_call',[{to:t.address,data:'0x70a08231'+addr(walletAddress)},'latest']))}
-async function updateBalances(){if(!walletAddress)return;try{let f=meta(fromToken.value),t=meta(toToken.value),fd=await decimalsOf(f),td=await decimalsOf(t);fromBalance.textContent='Balance '+formatUnits(await balance(f),fd);toBalance.textContent='Balance '+formatUnits(await balance(t),td)}catch{}}
-function allowanceData(owner,spender){return '0xdd62ed3e'+addr(owner)+addr(spender)}
-async function allowance(t){return BigInt(await wreq('eth_call',[{to:t.address,data:allowanceData(walletAddress,ROUTER)},'latest']))}
-function approveData(amount){return '0x095ea7b3'+addr(ROUTER)+uint(amount)}
-function swapTokenToEth(amount,min,path,to,dl){return '0x791ac947'+uint(amount)+uint(min)+pad('a0')+addr(to)+uint(dl)+uint(path.length)+path.map(addr).join('')}
-function swapTokenToToken(amount,min,path,to,dl){return '0x5c11d795'+uint(amount)+uint(min)+pad('a0')+addr(to)+uint(dl)+uint(path.length)+path.map(addr).join('')}
-function swapEthToToken(min,path,to,dl){return '0x7ff36ab5'+uint(min)+pad('80')+addr(to)+uint(dl)+uint(path.length)+path.map(addr).join('')}
-async function simulateAndGas(tx){await wreq('eth_call',[tx,'latest']);let gas=BigInt(await wreq('eth_estimateGas',[tx]));let gp=BigInt(await wreq('eth_gasPrice',[]));return {gas,fee:gas*gp}}
-async function prepareSwap(){clearPrepared();if(!walletAddress){await connectWallet();if(!walletAddress)return}let amount=fromAmount.value.trim(),f=fromToken.value,t=toToken.value;if(!amount||Number(amount)<=0){show('Enter an amount first.');return}try{let fm=meta(f),tm=meta(t),fd=await decimalsOf(fm),td=await decimalsOf(tm),input=parseUnits(amount,fd),paths=bestPath(f,t),best=await bestQuote(input,paths),min=(best.q*(10000n-SLIPPAGE_BPS))/10000n,dl=deadline(),tx={from:walletAddress,to:ROUTER,value:'0x0'},needsApproval=fm.address!=='native';if(needsApproval){let al=await allowance(fm);if(al<input){show('Approval required for '+f+'. Your wallet will ask for the token approval first.');let ah=await wreq('eth_sendTransaction',[{from:walletAddress,to:fm.address,data:approveData(input),value:'0x0'}]);show('Approval sent. Waiting for confirmation…');await waitReceipt(ah)}}if(fm.address==='native'){tx.value='0x'+input.toString(16);tx.data=swapEthToToken(min,best.path,walletAddress,dl)}else if(tm.address==='native'){tx.data=swapTokenToEth(input,min,best.path,walletAddress,dl)}else{tx.data=swapTokenToToken(input,min,best.path,walletAddress,dl)}show('Simulating exact executable route…');let g=await simulateAndGas(tx);tx.gas='0x'+g.gas.toString(16);let outText=fmtAmount(best.q,td),minText=fmtAmount(min,td),feeText=formatUnits(g.fee,18);pending={tx,trade:amount+' '+f+' → '+t,output:outText+' '+t,minOut:minText+' '+t,fee:feeText,path:best.path,outputRaw:best.q};review.style.display='block';review.innerHTML='<h3>Swap ready — review before wallet confirmation</h3><div class="line"><span>Trade</span><b>'+esc(pending.trade)+'</b></div><div class="line"><span>Expected output</span><b>'+esc(pending.output)+'</b></div><div class="line"><span>Minimum protected output</span><b>'+esc(pending.minOut)+'</b></div><div class="line"><span>Estimated network fee</span><b>'+esc(feeText)+' CRO</b></div><small>Route: '+esc(best.path.map(x=>x===WCRO?'WCRO':x).join(' → '))+'<br>Simulation passed. Nothing has been sent.</small>';continueBtn.style.display='block';show('Simulation passed. Review the fee and trade before continuing.');}catch(e){show('Swap stopped: '+(e.message||String(e))+' No swap was sent unless an approval was already confirmed.');}}
-async function continueToWallet(){if(!pending){show('No prepared swap.');return}let p=pending;pending=null;continueBtn.disabled=true;continueBtn.textContent='Opening Wallet…';try{let h=await wreq('eth_sendTransaction',[p.tx]);show('Swap submitted. Waiting for confirmation…');await waitReceipt(h);review.innerHTML+='<div class="ok" style="margin-top:12px">Swap confirmed. Tx: '+esc(h)+'</div>';continueBtn.style.display='none';await updateBalances()}catch(e){show('Wallet/swap stopped: '+(e.message||String(e)));continueBtn.disabled=false;continueBtn.textContent='Continue to Wallet';pending=p}}
-async function waitReceipt(h){for(let i=0;i<90;i++){let r=await wreq('eth_getTransactionReceipt',[h]);if(r){if(r.status==='0x0')throw Error('Transaction reverted.');return r}await new Promise(r=>setTimeout(r,2000))}throw Error('Confirmation timed out. Check Cronos Explorer.');}
-fromAmount.addEventListener('input',clearPrepared);fromToken.addEventListener('change',()=>{clearPrepared();updateBalances()});toToken.addEventListener('change',()=>{clearPrepared();updateBalances()});
-loadPublicTokens();
-</script>
-</body></html>
+
+
+/* =====================================================
+   VARIABLES
+   ===================================================== */
+
+let walletProvider = null;
+let walletAddress = null;
+
+let pending = null;
+let lastPath = null;
+let lastQuote = null;
+
+let publicTokens = [];
+
+let adminUnlocked = false;
+
+
+/* =====================================================
+   SHORT DOM HELPER
+   ===================================================== */
+
+const $ =
+id => document.getElementById(id);
+
+
+/* =====================================================
+   ESCAPE HTML
+   ===================================================== */
+
+function esc(s){
+
+return String(s).replace(
+/[&<>"']/g,
+
+m => ({
+'&':'&amp;',
+'<':'&lt;',
+'>':'&gt;',
+'"':'&quot;',
+"'":'&#39;'
+}[m])
+
+);
+
+}
+
+
+/* =====================================================
+   TOKEN LIST
+   ===================================================== */
+
+function tokens(){
+
+return starterTokens.concat(
+Array.isArray(publicTokens)
+? publicTokens
+: []
+);
+
+}
+
+
+/* =====================================================
+   POPULATE TOKEN DROPDOWNS
+   ===================================================== */
+
+function populate(){
+
+let ts = tokens();
+
+let a = $('fromToken');
+let b = $('toToken');
+
+a.innerHTML = '';
+b.innerHTML = '';
+
+ts.forEach(t => {
+
+a.add(
+new Option(
+t.symbol+' — '+t.name,
+t.symbol
+)
+);
+
+b.add(
+new Option(
+t.symbol+' — '+t.name,
+t.symbol
+)
+);
+
+});
+
+a.value = 'CRO';
+b.value = 'BUCKX';
+
+}
+
+
+/* =====================================================
+   LOAD PUBLIC TOKEN JSON
+   ===================================================== */
+
+async function loadPublicTokens(){
+
+try{
+
+let r =
+await fetch(
+'./banditswap-tokens.json',
+{cache:'no-store'}
+);
+
+if(!r.ok)
+throw new Error('Token list unavailable');
+
+let x =
+await r.json();
+
+publicTokens =
+Array.isArray(x)
+? x
+: (
+Array.isArray(x.tokens)
+? x.tokens
+: []
+);
+
+}catch(e){
+
+publicTokens = [];
+
+}
+
+populate();
+
+}
+
+
+/* =====================================================
+   ADMIN LOCAL STORAGE
+   ===================================================== */
+
+function localAdminTokens(){
+
+try{
+
+let x =
+JSON.parse(
+localStorage.getItem(
+'banditSwapAdminTokens'
+) || '[]'
+);
+
+return Array.isArray(x)
+? x
+: [];
+
+}catch{
+
+return [];
+
+}
+
+}
+
+
+function saveAdminTokens(){
+
+localStorage.setItem(
+'banditSwapAdminTokens',
+JSON.stringify(publicTokens)
+);
+
+}
+
+
+/* =====================================================
+   ADMIN LOGIN
+   ===================================================== */
+
+function toggleAdminLogin(){
+
+if(adminUnlocked){
+
+$('adminPanel').style.display =
+'block';
+
+return;
+
+}
+
+$('adminLogin').style.display =
+$('adminLogin').style.display === 'block'
+? 'none'
+: 'block';
+
+}
+
+
+function unlockAdmin(){
+
+if(
+$('adminPassword').value ===
+ADMIN_PASSWORD
+){
+
+adminUnlocked = true;
+
+$('adminLogin').style.display =
+'none';
+
+$('adminPanel').style.display =
+'block';
+
+$('adminPassword').value = '';
+
+renderAdminList();
+
+adminMessage(
+'Admin Panel unlocked.',
+'ok'
+);
+
+}else{
+
+$('adminLoginMsg').textContent =
+'Incorrect admin password.';
+
+}
+
+}
+
+
+function lockAdmin(){
+
+adminUnlocked = false;
+
+$('adminPanel').style.display =
+'none';
+
+$('adminLogin').style.display =
+'none';
+
+}
+
+
+/* =====================================================
+   ADMIN MESSAGE
+   ===================================================== */
+
+function adminMessage(t,kind=''){
+
+let e = $('adminMsg');
+
+e.style.display =
+'block';
+
+e.className =
+'status '+kind;
+
+e.textContent =
+t;
+
+}
+
+
+/* =====================================================
+   SHOW ADMIN TOKEN LIST
+   ===================================================== */
+
+function renderAdminList(){
+
+let box =
+$('adminTokenList');
+
+if(!publicTokens.length){
+
+box.innerHTML =
+'<div class="admin-note">No custom whitelisted tokens yet.</div>';
+
+return;
+
+}
+
+box.innerHTML =
+publicTokens.map(
+(t,i) => `
+
+<div class="token-item">
+
+<div class="token-item-info">
+
+<div>
+<span class="badge">
+${esc(t.symbol)}
+</span>
+—
+${esc(t.name)}
+</div>
+
+<div class="token-item-address">
+${esc(t.address)}
+•
+${esc(t.decimals)}
+decimals
+</div>
+
+</div>
+
+<button
+class="danger adminBtn small"
+type="button"
+onclick="removeToken(${i})">
+
+Remove
+
+</button>
+
+</div>
+
+`
+).join('');
+
+}
+
+
+/* =====================================================
+   ADD TOKEN
+   ===================================================== */
+
+function addToken(){
+
+if(!adminUnlocked){
+
+adminMessage(
+'Unlock the Admin Panel first.',
+'warn'
+);
+
+return;
+
+}
+
+let name =
+$('newName').value.trim();
+
+let symbol =
+$('newSymbol').value
+.trim()
+.toUpperCase();
+
+let address =
+$('newAddress').value.trim();
+
+let decimals =
+Number(
+$('newDecimals').value
+);
+
+
+/* VALIDATION */
+
+if(
+!name ||
+!symbol ||
+!address
+){
+
+adminMessage(
+'Enter the token name, symbol and contract address.',
+'warn'
+);
+
+return;
+
+}
+
+
+if(
+!/^0x[a-fA-F0-9]{40}$/.test(address)
+){
+
+adminMessage(
+'That is not a valid Cronos EVM contract address.',
+'warn'
+);
+
+return;
+
+}
+
+
+if(
+!Number.isInteger(decimals) ||
+decimals < 0 ||
+decimals > 36
+){
+
+adminMessage(
+'Decimals must be a whole number from 0 to 36.',
+'warn'
+);
+
+return;
+
+}
+
+
+/* DUPLICATE SYMBOL */
+
+if(
+starterTokens.some(
+t =>
+t.symbol.toUpperCase() ===
+symbol
+) ||
+publicTokens.some(
+t =>
+t.symbol.toUpperCase() ===
+symbol
+)
+){
+
+adminMessage(
+'That token symbol is already listed.',
+'warn'
+);
+
+return;
+
+}
+
+
+/* DUPLICATE CONTRACT */
+
+if(
+publicTokens.some(
+t =>
+t.address.toLowerCase() ===
+address.toLowerCase()
+)
+){
+
+adminMessage(
+'That contract is already listed.',
+'warn'
+);
+
+return;
+
+}
+
+
+/* ADD */
+
+publicTokens.push({
+
+name:name,
+symbol:symbol,
+address:address,
+decimals:decimals
+
+});
+
+
+saveAdminTokens();
+
+populate();
+
+renderAdminList();
+
+
+/* CLEAR */
+
+$('newName').value = '';
+$('newSymbol').value = '';
+$('newAddress').value = '';
+$('newDecimals').value = '18';
+
+
+adminMessage(
+symbol+
+' added to the whitelist. Download the JSON file and upload it to GitHub to publish it for everyone.',
+'ok'
+);
+
+}
+
+
+/* =====================================================
+   REMOVE TOKEN
+   ===================================================== */
+
+function removeToken(i){
+
+if(!adminUnlocked)
+return;
+
+let t =
+publicTokens[i];
+
+if(!t)
+return;
+
+if(
+!confirm(
+'Remove '+t.symbol+
+' from the whitelist?'
+)
+)
+return;
+
+publicTokens.splice(i,1);
+
+saveAdminTokens();
+
+populate();
+
+renderAdminList();
+
+adminMessage(
+t.symbol+
+' removed. Download the JSON file and upload it to GitHub to publish the change.',
+'ok'
+);
+
+}
+
+
+/* =====================================================
+   DOWNLOAD JSON
+   ===================================================== */
+
+function downloadTokenFile(){
+
+if(!adminUnlocked)
+return;
+
+let data =
+JSON.stringify(
+publicTokens,
+null,
+2
+);
+
+let blob =
+new Blob(
+[data],
+{type:'application/json'}
+);
+
+let url =
+URL.createObjectURL(blob);
+
+let a =
+document.createElement('a');
+
+a.href = url;
+
+a.download =
+'banditswap-tokens.json';
+
+document.body.appendChild(a);
+
+a.click();
+
+a.remove();
+
+URL.revokeObjectURL(url);
+
+adminMessage(
+'Token list downloaded. Upload banditswap-tokens.json to your BanditSwap folder on GitHub.',
+'ok'
+);
+
+}
+
+
+/* =====================================================
+   SWAP HELPERS
+   ===================================================== */
+
+function flipTokens(){
+
+let a =
+$('fromToken').value;
+
+let b =
+$('toToken').value;
+
+$('fromToken').value =
+b;
+
+$('toToken').value =
+a;
+
+clearPrepared();
+
+updateBalances();
+
+}
+
+
+function show(t){
+
+let e =
+$('status');
+
+e.style.display =
+'block';
+
+e.textContent =
+t;
+
+}
+
+
+function clearPrepared(){
+
+pending = null;
+
+$('review').style.display =
+'none';
+
+$('continueBtn').style.display =
+'none';
+
+$('toAmount').value =
+'';
+
+}
+
+
+function pad(x){
+
+return String(x)
+.replace(/^0x/,'')
+.padStart(64,'0');
+
+}
+
+
+function addr(a){
+return pad(a);
+}
+
+
+function uint(x){
+
+return pad(
+BigInt(x).toString(16)
+);
+
+}
+
+
+function deadline(){
+
+return BigInt(
+Math.floor(
+Date.now()/1000
+) + DEADLINE_SECONDS
+);
+
+}
+
+
+/* =====================================================
+   RPC
+   ===================================================== */
+
+async function rpc(
+method,
+params=[]
+){
+
+let r =
+await fetch(
+RPC,
+{
+method:'POST',
+headers:{
+'content-type':
+'application/json'
+},
+body:
+JSON.stringify({
+jsonrpc:'2.0',
+id:Date.now(),
+method:method,
+params:params
+})
+}
+);
+
+let j =
+await r.json();
+
+if(j.error)
+throw Error(
+j.error.message ||
+method+
+' failed'
+);
+
+return j.result;
+
+}
+
+
+async function call(
+to,
+data
+){
+
+return rpc(
+'eth_call',
+[
+{
+to:to,
+data:data
+},
+'latest'
+]
+);
+
+}
+
+
+/* =====================================================
+   VVS ROUTER QUOTES
+   ===================================================== */
+
+function encodePath(
+path,
+offset
+){
+
+return (
+pad(offset) +
+uint(path.length) +
+path.map(addr).join('')
+);
+
+}
+
+
+function encodeGetAmountsOut(
+amount,
+path
+){
+
+return (
+'0xd06ca61f' +
+uint(amount) +
+encodePath(
+path,
+'40'
+)
+);
+
+}
+
+
+async function routerQuote(
+amount,
+path
+){
+
+let raw =
+await call(
+ROUTER,
+encodeGetAmountsOut(
+amount,
+path
+)
+);
+
+let len =
+parseInt(
+raw.slice(66,130),
+16
+);
+
+if(!len)
+throw Error(
+'No VVS route for this pair.'
+);
+
+return BigInt(
+'0x'+
+raw.slice(130,194)
+);
+
+}
+
+
+/* =====================================================
+   TOKEN METADATA
+   ===================================================== */
+
+function meta(symbol){
+
+let t =
+tokens().find(
+x =>
+x.symbol === symbol
+);
+
+if(!t)
+throw Error(
+'Token not found.'
+);
+
+return t;
+
+}
+
+
+async function decimalsOf(t){
+
+if(
+t.address === 'native'
+)
+return 18;
+
+if(
+t.decimals != null
+)
+return Number(t.decimals);
+
+let raw =
+await call(
+t.address,
+'0x313ce567'
+);
+
+let d =
+Number(
+BigInt(raw)
+);
+
+t.decimals =
+d;
+
+return d;
+
+}
+
+
+/* =====================================================
+   UNITS
+   ===================================================== */
+
+function parseUnits(
+s,
+d
+){
+
+s =
+String(s).trim();
+
+if(
+! /^\d+(\.\d+)?$/.test(s)
+)
+throw Error(
+'Enter a valid amount.'
+);
+
+let [w,f=''] =
+s.split('.');
+
+if(
+f.length > d
+)
+throw Error(
+'Too many decimal places for this token.'
+);
+
+return (
+BigInt(w) *
+(10n ** BigInt(d))
++
+BigInt(
+(f+
+'0'.repeat(d))
+.slice(0,d)
+)
+);
+
+}
+
+
+function formatUnits(
+v,
+d
+){
+
+let n =
+BigInt(v);
+
+let base =
+10n ** BigInt(d);
+
+let w =
+n/base;
+
+let f =
+(n%base)
+.toString()
+.padStart(d,'0')
+.replace(/0+$/,'');
+
+return f
+? w+'.'+f
+: w.toString();
+
+}
+
+
+/* =====================================================
+   PATH FINDING
+   ===================================================== */
+
+function bestPath(
+from,
+to
+){
+
+let f =
+meta(from);
+
+let t =
+meta(to);
+
+if(
+f.address === 'native' &&
+t.address === 'native'
+)
+throw Error(
+'Choose two different tokens.'
+);
+
+if(
+f.address === 'native'
+)
+return [
+[
+WCRO,
+t.address.toLowerCase()
+]
+];
+
+if(
+t.address === 'native'
+)
+return [
+[
+f.address.toLowerCase(),
+WCRO
+]
+];
+
+if(
+f.address.toLowerCase() ===
+t.address.toLowerCase()
+)
+throw Error(
+'Choose two different tokens.'
+);
+
+return [
+
+[
+f.address.toLowerCase(),
+t.address.toLowerCase()
+],
+
+[
+f.address.toLowerCase(),
+WCRO,
+t.address.toLowerCase()
+]
+
+];
+
+}
+
+
+async function bestQuote(
+amount,
+paths
+){
+
+let best =
+null;
+
+for(
+let p of paths
+){
+
+try{
+
+let q =
+await routerQuote(
+amount,
+p
+);
+
+if(
+q > 0n &&
+(
+!best ||
+q > best.q
+)
+){
+
+best = {
+q:q,
+path:p
+};
+
+}
+
+}catch{}
+
+}
+
+if(!best)
+throw Error(
+'VVS could not find a route for this pair.'
+);
+
+return best;
+
+}
+
+
+function fmtAmount(
+v,
+d
+){
+
+return formatUnits(
+v,
+d
+);
+
+}
+
+
+/* =====================================================
+   LIVE QUOTE
+   ===================================================== */
+
+async function refreshQuote(){
+
+clearPrepared();
+
+let amount =
+$('fromAmount')
+.value
+.trim();
+
+let f =
+$('fromToken')
+.value;
+
+let t =
+$('toToken')
+.value;
+
+if(
+!amount ||
+Number(amount) <= 0
+){
+
+show(
+'Enter an amount first.'
+);
+
+return;
+
+}
+
+try{
+
+let fm =
+meta(f);
+
+let tm =
+meta(t);
+
+let fd =
+await decimalsOf(fm);
+
+let td =
+await decimalsOf(tm);
+
+let input =
+parseUnits(
+amount,
+fd
+);
+
+let paths =
+bestPath(f,t);
+
+let best =
+await bestQuote(
+input,
+paths
+);
+
+lastPath =
+best.path;
+
+lastQuote =
+best.q;
+
+$('toAmount').value =
+fmtAmount(
+best.q,
+td
+);
+
+$('quoteBox').style.display =
+'block';
+
+$('quoteBox').innerHTML =
+'<b>Live VVS router quote</b><br>'+
+esc(amount)+
+' '+
+esc(f)+
+' → '+
+esc(
+fmtAmount(
+best.q,
+td
+)
+)+
+' '+
+esc(t)+
+'<br><small>Route: '+
+esc(
+best.path.map(
+x =>
+x === WCRO
+? 'WCRO'
+: x
+).join(' → ')
+)+
+' • same router used for execution • no transaction sent.</small>';
+
+show(
+'Quote ready.'
+);
+
+}catch(e){
+
+$('quoteBox').style.display =
+'block';
+
+$('quoteBox').innerHTML =
+'<b>Quote failed</b><br>'+
+esc(e.message);
+
+show(
+'No transaction was sent.'
+);
+
+}
+
+}
+
+
+/* =====================================================
+   WALLET
+   ===================================================== */
+
+async function connectWallet(){
+
+if(!window.ethereum){
+
+show(
+'No injected wallet detected. Open this page in MetaMask or Crypto.com Onchain Wallet.'
+);
+
+return;
+
+}
+
+try{
+
+walletProvider =
+window.ethereum;
+
+let c =
+await walletProvider.request({
+method:'eth_chainId'
+});
+
+if(
+c.toLowerCase() !==
+CHAIN_ID
+){
+
+await walletProvider.request({
+method:
+'wallet_switchEthereumChain',
+
+params:[
+{
+chainId:CHAIN_ID
+}
+]
+
+});
+
+}
+
+let a =
+await walletProvider.request({
+method:'eth_requestAccounts'
+});
+
+walletAddress =
+a[0];
+
+$('walletBtn').textContent =
+'Wallet Connected';
+
+$('walletLine').style.display =
+'block';
+
+$('walletLine').textContent =
+walletAddress;
+
+show(
+'Wallet connected on Cronos Mainnet.'
+);
+
+await updateBalances();
+
+}catch(e){
+
+show(
+e.message ||
+String(e)
+);
+
+}
+
+}
+
+
+async function wreq(
+method,
+params=[]
+){
+
+if(!walletProvider)
+throw Error(
+'Connect your wallet first.'
+);
+
+return walletProvider.request({
+method:method,
+params:params
+});
+
+}
+
+
+/* =====================================================
+   BALANCES
+   ===================================================== */
+
+async function balance(t){
+
+if(!walletAddress)
+return null;
+
+if(
+t.address === 'native'
+){
+
+return BigInt(
+await wreq(
+'eth_getBalance',
+[
+walletAddress,
+'latest'
+]
+)
+);
+
+}
+
+return BigInt(
+await wreq(
+'eth_call',
+[
+{
+to:t.address,
+data:
+'0x70a08231'+
+addr(walletAddress)
+},
+'latest'
+]
+)
+);
+
+}
+
+
+async function updateBalances(){
+
+if(!walletAddress)
+return;
+
+try{
+
+let f =
+meta(
+$('fromToken').value
+);
+
+let t =
+meta(
+$('toToken').value
+);
+
+let fd =
+await decimalsOf(f);
+
+let td =
+await decimalsOf(t);
+
+$('fromBalance').textContent =
+'Balance '+
+formatUnits(
+await balance(f),
+fd
+);
+
+$('toBalance').textContent =
+'Balance '+
+formatUnits(
+await balance(t),
+td
+);
+
+}catch{}
+
+}
+
+
+/* =====================================================
+   APPROVAL
+   ===================================================== */
+
+function allowanceData(
+owner,
+spender
+){
+
+return (
+'0xdd62ed3e'+
+addr(owner)+
+addr(spender)
+);
+
+}
+
+
+async function allowance(t){
+
+return BigInt(
+await wreq(
+'eth_call',
+[
+{
+to:t.address,
+data:
+allowanceData(
+walletAddress,
+ROUTER
+)
+},
+'latest'
+]
+)
+);
+
+}
+
+
+function approveData(
+amount
+){
+
+return (
+'0x095ea7b3'+
+addr(ROUTER)+
+uint(amount)
+);
+
+}
+
+
+/* =====================================================
+   SWAP DATA
+   ===================================================== */
+
+function swapTokenToEth(
+amount,
+min,
+path,
+to,
+dl
+){
+
+return (
+'0x791ac947'+
+uint(amount)+
+uint(min)+
+pad('a0')+
+addr(to)+
+uint(dl)+
+uint(path.length)+
+path.map(addr).join('')
+);
+
+}
+
+
+function swapTokenToToken(
+amount,
+min,
+path,
+to,
+dl
+){
+
+return (
+'0x5c11d795'+
+uint(amount)+
+uint(min)+
+pad('a0')+
+addr(to)+
+uint(dl)+
+uint(path.length)+
+path.map(addr).join('')
+);
+
+}
+
+
+function swapEthToToken(
+min,
+path,
+to,
+dl
+){
+
+return (
+'0x7ff36ab5'+
+uint(min)+
+pad('80')+
+addr(to)+
+uint(dl)+
+uint(path.length)+
+path.map(addr).join('')
+);
+
+}
+
+
+/* =====================================================
+   SIMULATE + GAS
+   ===================================================== */
+
+async function simulateAndGas(tx){
+
+await wreq(
+'eth_call',
+[
+tx,
+'latest'
+]
+);
+
+let gas =
+BigInt(
+await wreq(
+'eth_estimateGas',
+[tx]
+)
+);
+
+let gp =
+BigInt(
+await wreq(
+'eth_gasPrice',
+[]
+)
+);
+
+return {
+gas:gas,
+fee:gas*gp
+};
+
+}
+
+
+/* =====================================================
+   PREPARE SWAP
+   ===================================================== */
+
+async function prepareSwap(){
+
+clearPrepared();
+
+if(!walletAddress){
+
+await connectWallet();
+
+if(!walletAddress)
+return;
+
+}
+
+let amount =
+$('fromAmount')
+.value
+.trim();
+
+let f =
+$('fromToken')
+.value;
+
+let t =
+$('toToken')
+.value;
+
+if(
+!amount ||
+Number(amount)<=0
+){
+
+show(
+'Enter an amount first.'
+);
+
+return;
+
+}
+
+try{
+
+let fm =
+meta(f);
+
+let tm =
+meta(t);
+
+let fd =
+await decimalsOf(fm);
+
+let td =
+await decimalsOf(tm);
+
+let input =
+parseUnits(
+amount,
+fd
+);
+
+let paths =
+bestPath(f,t);
+
+let best =
+await bestQuote(
+input,
+paths
+);
+
+let min =
+(
+best.q *
+(10000n-SLIPPAGE_BPS)
+) /
+10000n;
+
+let dl =
+deadline();
+
+let tx = {
+from:walletAddress,
+to:ROUTER,
+value:'0x0'
+};
+
+let needsApproval =
+fm.address !== 'native';
+
+
+if(needsApproval){
+
+let al =
+await allowance(fm);
+
+if(al < input){
+
+show(
+'Approval required for '+
+f+
+'. Your wallet will ask you to approve the token first.'
+);
+
+let ah =
+await wreq(
+'eth_sendTransaction',
+[
+{
+from:walletAddress,
+to:fm.address,
+data:approveData(input),
+value:'0x0'
+}
+]
+);
+
+show(
+'Approval sent. Waiting for confirmation…'
+);
+
+await waitReceipt(ah);
+
+}
+
+}
+
+
+if(
+fm.address === 'native'
+){
+
+tx.value =
+'0x'+
+input.toString(16);
+
+tx.data =
+swapEthToToken(
+min,
+best.path,
+walletAddress,
+dl
+);
+
+}else if(
+tm.address === 'native'
+){
+
+tx.data =
+swapTokenToEth(
+input,
+min,
+best.path,
+walletAddress,
+dl
+);
+
+}else{
+
+tx.data =
+swapTokenToToken(
+input,
+min,
+best.path,
+walletAddress,
+dl
+);
+
+}
+
+
+show(
+'Simulating exact executable route…'
+);
+
+let g =
+await simulateAndGas(tx);
+
+tx.gas =
+'0x'+
+g.gas.toString(16);
+
+let outText =
+fmtAmount(
+best.q,
+td
+);
+
+let minText =
+fmtAmount(
+min,
+td
+);
+
+let feeText =
+formatUnits(
+g.fee,
+18
+);
+
+pending = {
+
+tx:tx,
+
+trade:
+amount+
+' '+
+f+
+' → '+
+t,
+
+output:
+outText+
+' '+
+t,
+
+minOut:
+minText+
+' '+
+t,
+
+fee:
+feeText,
+
+path:
+best.path,
+
+outputRaw:
+best.q
+
+};
+
+
+$('review').style.display =
+'block';
+
+$('review').innerHTML =
+
+'<h3>Swap ready — review before wallet confirmation</h3>'+
+
+'<div class="line">'+
+'<span>Trade</span>'+
+'<b>'+
+esc(pending.trade)+
+'</b>'+
+'</div>'+
+
+'<div class="line">'+
+'<span>Expected output</span>'+
+'<b>'+
+esc(pending.output)+
+'</b>'+
+'</div>'+
+
+'<div class="line">'+
+'<span>Minimum protected output</span>'+
+'<b>'+
+esc(pending.minOut)+
+'</b>'+
+'</div>'+
+
+'<div class="line">'+
+'<span>Estimated network fee</span>'+
+'<b>'+
+esc(feeText)+
+' CRO</b>'+
+'</div>'+
+
+'<small>Route: '+
+esc(
+best.path.map(
+x =>
+x===WCRO
+? 'WCRO'
+: x
+).join(' → ')
+)+
+'<br>Simulation passed. Nothing has been sent.</small>';
+
+
+$('continueBtn').style.display =
+'block';
+
+show(
+'Simulation passed. Review the fee and trade before continuing.'
+);
+
+
+}catch(e){
+
+show(
+'Swap stopped: '+
+(e.message||String(e))+
+' No swap was sent unless an approval was already confirmed.'
+);
+
+}
+
+}
+
+
+/* =====================================================
+   CONTINUE TO WALLET
+   ===================================================== */
+
+async function continueToWallet(){
+
+if(!pending){
+
+show(
+'No prepared swap.'
+);
+
+return;
+
+}
+
+let p =
+pending;
+
+pending = null;
+
+$('continueBtn').disabled =
+true;
+
+$('continueBtn').textContent =
+'Opening Wallet…';
+
+try{
+
+let h =
+await wreq(
+'eth_sendTransaction',
+[p.tx]
+);
+
+show(
+'Swap submitted. Waiting for confirmation…'
+);
+
+await waitReceipt(h);
+
+$('review').innerHTML +=
+
+'<div class="ok" style="margin-top:12px">'+
+'Swap confirmed. Tx: '+
+esc(h)+
+'</div>';
+
+$('continueBtn').style.display =
+'none';
+
+await updateBalances();
+
+}catch(e){
+
+show(
+'Wallet/swap stopped: '+
+(e.message||String(e))
+);
+
+$('continueBtn').disabled =
+false;
+
+$('continueBtn').textContent =
+'Continue to Wallet';
+
+pending = p;
+
+}
+
+}
+
+
+/* =====================================================
+   WAIT FOR RECEIPT
+   ===================================================== */
+
+async function waitReceipt(h){
+
+for(
+let i=0;
+i<90;
+i++
+){
+
+let r =
+await wreq(
+'eth_getTransactionReceipt',
+[h]
+);
+
+if(r){
+
+if(
+r.status === '0x0'
+)
+throw Error(
+'Transaction reverted.'
+);
+
+return r;
+
+}
+
+await new Promise(
+r =>
+setTimeout(r,2000)
+);
+
+}
+
+throw Error(
+'Confirmation timed out. Check Cronos Explorer.'
+);
+
+}
+
+
+/* =====================================================
+   EVENTS
+   ===================================================== */
+
+$('fromAmount')
+.addEventListener(
+'input',
+clearPrepared
+);
+
+$('fromToken')
+.addEventListener(
+'change',
+()=>{
+
+clearPrepared();
+
+updateBalances();
+
+}
+);
+
+$('toToken')
+.addEventListener(
+'change',
+()=>{
+
+clearPrepared();
+
+updateBalances();
+
+}
+);
+
+
+/* =====================================================
+   START
+   ===================================================== */
+
+loadPublicTokens().then(()=>{
+
+let saved =
+localAdminTokens();
+
+if(saved.length){
+
+let merged =
+[...publicTokens];
+
+saved.forEach(t=>{
+
+if(
+!merged.some(
+x =>
+x.address.toLowerCase() ===
+t.address.toLowerCase()
+)
+){
+
+merged.push(t);
+
+}
+
+});
+
+publicTokens =
+merged;
+
+populate();
+
+}
+
+});
+
+</script></body>
+</html>
