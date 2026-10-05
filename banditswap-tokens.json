@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Cronos",
+    "symbol": "CRO",
+    "address": "native",
+    "decimals": 18
+  },
+  {
+    "name": "BUCKX",
+    "symbol": "BUCKX",
+    "address": "0x58DC82669Ae64878cae2B8A0584179A6b33Bb3D2",
+    "decimals": 18
+  },
+  {
+    "name": "USD Coin (native)",
+    "symbol": "USDC",
+    "address": "0x3D7F2C478aAfdB65542BCB44bCeeC05849999d2D",
+    "decimals": 6
+  },
+  {
+    "name": "USD Coin (bridged)",
+    "symbol": "USDC.e",
+    "address": "0xc21223249CA28397B4B6541dfFaEcC539BfF0c59",
+    "decimals": 6
+  },
+  {
+    "name": "Tether USD",
+    "symbol": "USDT",
+    "address": "0x66e428c3f67a68878562e79A0234c1F83c208770",
+    "decimals": 6
+  },
+  {
+    "name": "Wrapped Ether",
+    "symbol": "WETH",
+    "address": "0xe44Fd7fCb2b1581822D0c862B68222998a0c299a",
+    "decimals": 18
+  },
+  {
+    "name": "Wrapped Bitcoin",
+    "symbol": "WBTC",
+    "address": "0x062E66477Faf219F25D27dCED647BF57C3107d52",
+    "decimals": 8
+  },
+  {
+    "name": "VVS",
+    "symbol": "VVS",
+    "address": "0x2D03bECE6747ADC00E1a131BBA1469C15fD11e03",
+    "decimals": 18
+  }
+]
