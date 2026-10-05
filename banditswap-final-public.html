@@ -1,8 +1,13 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>BanditSwap — Blockchain Banditz</title><link href="https://fonts.cdnfonts.com/css/sprite-graffiti" rel="stylesheet"><style>
+<title>BanditSwap — Blockchain Banditz</title>
+
+<link href="https://fonts.cdnfonts.com/css/sprite-graffiti" rel="stylesheet">
+
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 :root{
@@ -378,239 +383,362 @@ header{
     max-width:220px
   }
 }
-</style></head><body><header>
-  <div class="logo">BanditSwap</div>  <nav class="nav">
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">BanditSwap</div>
+
+  <nav class="nav">
     <a href="index.html">Home</a>
     <a href="banditswap.html">BanditSwap</a>
   </nav>
-</header><main class="wrap"><section class="hero">
+</header>
+
+<main class="wrap">
+
+<section class="hero">
   <h1>BanditSwap</h1>
   <p>Direct Cronos swaps through the VVS V2 router.</p>
-</section><section class="panel"><button id="walletBtn"
-class="secondary"
-onclick="connectWallet()">
-Connect Wallet
+</section>
+
+<section class="panel">
+
+<button
+  id="walletBtn"
+  class="secondary"
+  type="button"
+  onclick="connectWallet()">
+  Connect Wallet
 </button>
 
-<div id="walletLine"
-     class="wallet"
-     style="display:none">
-</div><!-- PAY TOKEN --><div class="token-box">  <div class="row"><span class="label">
-  You pay
-</span>
+<div
+  id="walletLine"
+  class="wallet"
+  style="display:none">
+</div>
 
-<span class="label"
+
+<!-- PAY TOKEN -->
+
+<div class="token-box">
+
+  <div class="row">
+
+    <span class="label">
+      You pay
+    </span>
+
+    <span
+      class="label"
       id="fromBalance"
       style="margin-left:auto">
-  Balance —
-</span>
+      Balance —
+    </span>
 
-  </div>  <div class="row"><input
-  id="fromAmount"
-  class="amount"
-  inputmode="decimal"
-  placeholder="0.0">
+  </div>
 
-<select
-  id="fromToken"
-  class="token-select">
-</select>
+  <div class="row">
 
-  </div></div><div class="arrow">
+    <input
+      id="fromAmount"
+      class="amount"
+      inputmode="decimal"
+      placeholder="0.0">
+
+    <select
+      id="fromToken"
+      class="token-select">
+    </select>
+
+  </div>
+
+</div>
+
+
+<div class="arrow">
+
   <button
     type="button"
     onclick="flipTokens()">
     ↕
   </button>
-</div><!-- RECEIVE TOKEN --><div class="token-box">  <div class="row"><span class="label">
-  You receive
-</span>
 
-<span class="label"
+</div>
+
+
+<!-- RECEIVE TOKEN -->
+
+<div class="token-box">
+
+  <div class="row">
+
+    <span class="label">
+      You receive
+    </span>
+
+    <span
+      class="label"
       id="toBalance"
       style="margin-left:auto">
-  Balance —
-</span>
+      Balance —
+    </span>
 
-  </div>  <div class="row"><input
-  id="toAmount"
-  class="amount"
-  placeholder="0.0"
-  readonly>
+  </div>
 
-<select
-  id="toToken"
-  class="token-select">
-</select>
+  <div class="row">
 
-  </div></div><button
-id="quoteBtn"
-class="secondary"
-onclick="refreshQuote()">
-Get Live Quote
-</button>
+    <input
+      id="toAmount"
+      class="amount"
+      placeholder="0.0"
+      readonly>
+
+    <select
+      id="toToken"
+      class="token-select">
+    </select>
+
+  </div>
+
+</div>
+
 
 <button
-id="swapBtn"
-class="primary"
-onclick="prepareSwap()">
-Prepare Swap
+  id="quoteBtn"
+  class="secondary"
+  type="button"
+  onclick="refreshQuote()">
+  Get Live Quote
 </button>
 
-<div id="quoteBox"
-     class="quote">
-</div><div id="status"
-     class="status">
-</div><div id="review"
-     class="review">
-</div><button
-id="continueBtn"
-class="primary"
-style="display:none"
-onclick="continueToWallet()">
-Continue to Wallet
+
+<button
+  id="swapBtn"
+  class="primary"
+  type="button"
+  onclick="prepareSwap()">
+  Prepare Swap
 </button>
+
+
+<div
+  id="quoteBox"
+  class="quote">
+</div>
+
+
+<div
+  id="status"
+  class="status">
+</div>
+
+
+<div
+  id="review"
+  class="review">
+</div>
+
+
+<button
+  id="continueBtn"
+  class="primary"
+  type="button"
+  style="display:none"
+  onclick="continueToWallet()">
+  Continue to Wallet
+</button>
+
 
 <p class="foot">
-No transaction is sent until you approve the final wallet confirmation.
-Token approvals are requested only when needed.
-</p><!-- =====================================================
-     ADMIN PANEL
-     ===================================================== --><button
-id="adminToggle"
-class="admin-toggle"
-type="button"
-onclick="toggleAdminLogin()">
-Admin
+  No transaction is sent until you approve the final wallet confirmation.
+  Token approvals are requested only when needed.
+</p>
+
+
+<!-- ADMIN -->
+
+<button
+  id="adminToggle"
+  class="admin-toggle"
+  type="button"
+  onclick="toggleAdminLogin()">
+  Admin
 </button>
+
 
 <div
   id="adminLogin"
-  class="admin-login">  <div class="label">
-    Administrator access
-  </div><input
-id="adminPassword"
-type="password"
-placeholder="Admin password"
-autocomplete="off">
+  class="admin-login">
 
-<button
-class="adminBtn"
-type="button"
-style="margin-top:8px"
-onclick="unlockAdmin()">
-Unlock Admin Panel
-</button>
+  <div class="label">
+    Administrator access
+  </div>
+
+  <input
+    id="adminPassword"
+    type="password"
+    placeholder="Admin password"
+    autocomplete="off">
+
+  <button
+    class="adminBtn"
+    type="button"
+    style="margin-top:8px"
+    onclick="unlockAdmin()">
+    Unlock Admin Panel
+  </button>
 
   <div
     id="adminLoginMsg"
     class="warn"
     style="margin-top:8px">
-  </div></div><section
+  </div>
+
+</div>
+
+
+<section
   id="adminPanel"
-  class="admin">  <h2>
+  class="admin">
+
+  <h2>
     Admin Panel
-  </h2>  <div class="admin-note">Add or remove tokens from the BanditSwap whitelist.
-This list is only visible here to the administrator.
+  </h2>
 
-  </div>  <div class="grid"><div class="field">
-
-  <div class="label">
-    Token name
+  <div class="admin-note">
+    Add or remove tokens from the BanditSwap whitelist.
+    This list is only visible here to the administrator.
   </div>
 
-  <input
-    id="newName"
-    placeholder="CorgiAI">
 
-</div>
+  <div class="grid">
+
+    <div class="field">
+
+      <div class="label">
+        Token name
+      </div>
+
+      <input
+        id="newName"
+        placeholder="CorgiAI">
+
+    </div>
 
 
-<div class="field">
+    <div class="field">
 
-  <div class="label">
-    Symbol
+      <div class="label">
+        Symbol
+      </div>
+
+      <input
+        id="newSymbol"
+        placeholder="CORGIAI">
+
+    </div>
+
+
+    <div
+      class="field"
+      style="grid-column:1/-1">
+
+      <div class="label">
+        Cronos contract address
+      </div>
+
+      <input
+        id="newAddress"
+        placeholder="0x...">
+
+    </div>
+
+
+    <div class="field">
+
+      <div class="label">
+        Decimals
+      </div>
+
+      <input
+        id="newDecimals"
+        type="number"
+        value="18"
+        min="0"
+        max="36">
+
+    </div>
+
   </div>
 
-  <input
-    id="newSymbol"
-    placeholder="CORGIAI">
 
-</div>
+  <div class="admin-actions">
+
+    <button
+      id="addTokenBtn"
+      class="primary"
+      style="width:auto;margin-top:0"
+      type="button"
+      onclick="addToken()">
+      Add Token
+    </button>
 
 
-<div
-  class="field"
-  style="grid-column:1/-1">
+    <button
+      class="adminBtn"
+      type="button"
+      onclick="downloadTokenFile()">
+      Download Token List
+    </button>
 
-  <div class="label">
-    Cronos contract address
+
+    <button
+      class="adminBtn"
+      type="button"
+      onclick="lockAdmin()">
+      Lock
+    </button>
+
   </div>
 
-  <input
-    id="newAddress"
-    placeholder="0x...">
 
-</div>
-
-
-<div class="field">
-
-  <div class="label">
-    Decimals
-  </div>
-
-  <input
-    id="newDecimals"
-    type="number"
-    value="18"
-    min="0"
-    max="36">
-
-</div>
-
-  </div>  <div class="admin-actions"><button
-  class="primary"
-  style="width:auto;margin-top:0"
-  type="button"
-  onclick="addToken()">
-  Add Token
-</button>
-
-
-<button
-  class="adminBtn"
-  type="button"
-  onclick="downloadTokenFile()">
-  Download Token List
-</button>
-
-
-<button
-  class="adminBtn"
-  type="button"
-  onclick="lockAdmin()">
-  Lock
-</button>
-
-  </div>  <div
+  <div
     id="adminMsg"
     class="status">
-  </div>  <div
+  </div>
+
+
+  <div
     id="adminTokenList"
     class="token-list">
-  </div>  <div
-    class="admin-note"
-    style="margin-top:14px">After adding or removing tokens, download the token list
-and upload the downloaded
-<b>banditswap-tokens.json</b>
-file to your GitHub Pages BanditSwap folder.
+  </div>
 
-  </div></section></section>
-</main><script>
+
+  <div
+    class="admin-note"
+    style="margin-top:14px">
+
+    After adding or removing tokens, download the token list
+    and upload the downloaded
+    <b>banditswap-tokens.json</b>
+    file to your GitHub Pages BanditSwap folder.
+
+  </div>
+
+</section>
+
+</section>
+
+</main>
+
+
+<script>
 
 /* =====================================================
-   CORE BANDITSWAP SETTINGS
+   CORE SETTINGS
    ===================================================== */
 
 const RPC =
@@ -635,16 +763,6 @@ const DEADLINE_SECONDS =
 
 /* =====================================================
    ADMIN PASSWORD
-   =====================================================
-
-   Change this password if you want.
-
-   IMPORTANT:
-   Because this is a static GitHub Pages site,
-   this is only a basic admin gate, NOT secure
-   server-side authentication.
-
-   Never put a GitHub access token in this HTML.
    ===================================================== */
 
 const ADMIN_PASSWORD =
@@ -652,7 +770,7 @@ const ADMIN_PASSWORD =
 
 
 /* =====================================================
-   PERMANENT STARTER TOKENS
+   STARTER TOKENS
    ===================================================== */
 
 const starterTokens = [
@@ -733,7 +851,7 @@ let adminUnlocked = false;
 
 
 /* =====================================================
-   SHORT DOM HELPER
+   DOM HELPER
    ===================================================== */
 
 const $ =
@@ -778,7 +896,7 @@ Array.isArray(publicTokens)
 
 
 /* =====================================================
-   POPULATE TOKEN DROPDOWNS
+   POPULATE DROPDOWNS
    ===================================================== */
 
 function populate(){
@@ -787,6 +905,9 @@ let ts = tokens();
 
 let a = $('fromToken');
 let b = $('toToken');
+
+if(!a || !b)
+return;
 
 a.innerHTML = '';
 b.innerHTML = '';
@@ -809,7 +930,14 @@ t.symbol
 
 });
 
+if(
+ts.some(t => t.symbol === 'CRO')
+)
 a.value = 'CRO';
+
+if(
+ts.some(t => t.symbol === 'BUCKX')
+)
 b.value = 'BUCKX';
 
 }
@@ -835,14 +963,22 @@ throw new Error('Token list unavailable');
 let x =
 await r.json();
 
-publicTokens =
-Array.isArray(x)
-? x
-: (
+if(Array.isArray(x)){
+
+publicTokens = x;
+
+}else if(
+x &&
 Array.isArray(x.tokens)
-? x.tokens
-: []
-);
+){
+
+publicTokens = x.tokens;
+
+}else{
+
+publicTokens = [];
+
+}
 
 }catch(e){
 
@@ -874,7 +1010,7 @@ return Array.isArray(x)
 ? x
 : [];
 
-}catch{
+}catch(e){
 
 return [];
 
@@ -885,10 +1021,21 @@ return [];
 
 function saveAdminTokens(){
 
+try{
+
 localStorage.setItem(
 'banditSwapAdminTokens',
 JSON.stringify(publicTokens)
 );
+
+}catch(e){
+
+console.error(
+'Could not save admin tokens:',
+e
+);
+
+}
 
 }
 
@@ -971,6 +1118,9 @@ function adminMessage(t,kind=''){
 
 let e = $('adminMsg');
 
+if(!e)
+return;
+
 e.style.display =
 'block';
 
@@ -992,6 +1142,12 @@ function renderAdminList(){
 let box =
 $('adminTokenList');
 
+if(!box)
+return;
+
+if(!Array.isArray(publicTokens))
+publicTokens = [];
+
 if(!publicTokens.length){
 
 box.innerHTML =
@@ -1011,16 +1167,16 @@ publicTokens.map(
 
 <div>
 <span class="badge">
-${esc(t.symbol)}
+${esc(t.symbol || '')}
 </span>
 —
-${esc(t.name)}
+${esc(t.name || '')}
 </div>
 
 <div class="token-item-address">
-${esc(t.address)}
+${esc(t.address || '')}
 •
-${esc(t.decimals)}
+${esc(t.decimals ?? '')}
 decimals
 </div>
 
@@ -1044,10 +1200,12 @@ Remove
 
 
 /* =====================================================
-   ADD TOKEN
+   FIXED ADD TOKEN
    ===================================================== */
 
 function addToken(){
+
+try{
 
 if(!adminUnlocked){
 
@@ -1060,20 +1218,53 @@ return;
 
 }
 
-let name =
-$('newName').value.trim();
 
-let symbol =
-$('newSymbol').value
+/* GET FORM FIELDS */
+
+const nameEl =
+$('newName');
+
+const symbolEl =
+$('newSymbol');
+
+const addressEl =
+$('newAddress');
+
+const decimalsEl =
+$('newDecimals');
+
+
+if(
+!nameEl ||
+!symbolEl ||
+!addressEl ||
+!decimalsEl
+){
+
+adminMessage(
+'Admin form error: a required field could not be found.',
+'warn'
+);
+
+return;
+
+}
+
+
+const name =
+nameEl.value.trim();
+
+const symbol =
+symbolEl.value
 .trim()
 .toUpperCase();
 
-let address =
-$('newAddress').value.trim();
+const address =
+addressEl.value.trim();
 
-let decimals =
+const decimals =
 Number(
-$('newDecimals').value
+decimalsEl.value
 );
 
 
@@ -1125,19 +1316,39 @@ return;
 }
 
 
-/* DUPLICATE SYMBOL */
+/* MAKE SURE ARRAY EXISTS */
 
 if(
+!Array.isArray(publicTokens)
+){
+
+publicTokens = [];
+
+}
+
+
+/* DUPLICATE SYMBOL */
+
+const starterDuplicate =
 starterTokens.some(
 t =>
-t.symbol.toUpperCase() ===
+String(t.symbol || '')
+.toUpperCase() ===
 symbol
-) ||
+);
+
+const customSymbolDuplicate =
 publicTokens.some(
 t =>
-t.symbol.toUpperCase() ===
+String(t.symbol || '')
+.toUpperCase() ===
 symbol
-)
+);
+
+
+if(
+starterDuplicate ||
+customSymbolDuplicate
 ){
 
 adminMessage(
@@ -1152,13 +1363,19 @@ return;
 
 /* DUPLICATE CONTRACT */
 
-if(
+const addressLower =
+address.toLowerCase();
+
+const contractDuplicate =
 publicTokens.some(
 t =>
-t.address.toLowerCase() ===
-address.toLowerCase()
-)
-){
+String(t.address || '')
+.toLowerCase() ===
+addressLower
+);
+
+
+if(contractDuplicate){
 
 adminMessage(
 'That contract is already listed.',
@@ -1170,38 +1387,84 @@ return;
 }
 
 
-/* ADD */
+/* CREATE TOKEN */
 
-publicTokens.push({
+const newToken = {
 
 name:name,
+
 symbol:symbol,
+
 address:address,
+
 decimals:decimals
 
-});
+};
 
+
+/* ADD */
+
+publicTokens.push(
+newToken
+);
+
+
+/* SAVE */
 
 saveAdminTokens();
 
+
+/* REFRESH DROPDOWNS */
+
 populate();
+
+
+/* REFRESH ADMIN LIST */
 
 renderAdminList();
 
 
-/* CLEAR */
+/* CLEAR FORM */
 
-$('newName').value = '';
-$('newSymbol').value = '';
-$('newAddress').value = '';
-$('newDecimals').value = '18';
+nameEl.value = '';
 
+symbolEl.value = '';
+
+addressEl.value = '';
+
+decimalsEl.value = '18';
+
+
+/* SUCCESS MESSAGE */
 
 adminMessage(
 symbol+
-' added to the whitelist. Download the JSON file and upload it to GitHub to publish it for everyone.',
+' added successfully! Download the JSON file and upload it to GitHub to publish it for everyone.',
 'ok'
 );
+
+
+/* ALSO SHOW A SIMPLE ALERT */
+
+alert(
+symbol+
+' added successfully!'
+);
+
+}catch(error){
+
+console.error(
+'BanditSwap Add Token Error:',
+error
+);
+
+adminMessage(
+'Add Token error: '+
+(error.message || String(error)),
+'warn'
+);
+
+}
 
 }
 
@@ -1211,6 +1474,8 @@ symbol+
    ===================================================== */
 
 function removeToken(i){
+
+try{
 
 if(!adminUnlocked)
 return;
@@ -1223,13 +1488,17 @@ return;
 
 if(
 !confirm(
-'Remove '+t.symbol+
+'Remove '+
+t.symbol+
 ' from the whitelist?'
 )
 )
 return;
 
-publicTokens.splice(i,1);
+publicTokens.splice(
+i,
+1
+);
 
 saveAdminTokens();
 
@@ -1242,6 +1511,16 @@ t.symbol+
 ' removed. Download the JSON file and upload it to GitHub to publish the change.',
 'ok'
 );
+
+}catch(error){
+
+adminMessage(
+'Remove error: '+
+(error.message || String(error)),
+'warn'
+);
+
+}
 
 }
 
@@ -1265,7 +1544,9 @@ null,
 let blob =
 new Blob(
 [data],
-{type:'application/json'}
+{
+type:'application/json'
+}
 );
 
 let url =
@@ -1274,7 +1555,8 @@ URL.createObjectURL(blob);
 let a =
 document.createElement('a');
 
-a.href = url;
+a.href =
+url;
 
 a.download =
 'banditswap-tokens.json';
@@ -1378,7 +1660,8 @@ function deadline(){
 return BigInt(
 Math.floor(
 Date.now()/1000
-) + DEADLINE_SECONDS
+) +
+DEADLINE_SECONDS
 );
 
 }
@@ -1741,7 +2024,7 @@ path:p
 
 }
 
-}catch{}
+}catch(e){}
 
 }
 
@@ -2071,7 +2354,7 @@ await balance(t),
 td
 );
 
-}catch{}
+}catch(e){}
 
 }
 
@@ -2694,7 +2977,8 @@ updateBalances();
    START
    ===================================================== */
 
-loadPublicTokens().then(()=>{
+loadPublicTokens()
+.then(()=>{
 
 let saved =
 localAdminTokens();
@@ -2707,8 +2991,12 @@ let merged =
 saved.forEach(t=>{
 
 if(
+t &&
+t.address &&
 !merged.some(
 x =>
+x &&
+x.address &&
 x.address.toLowerCase() ===
 t.address.toLowerCase()
 )
@@ -2727,7 +3015,19 @@ populate();
 
 }
 
+})
+.catch(error=>{
+
+console.error(
+'BanditSwap startup error:',
+error
+);
+
+populate();
+
 });
 
-</script></body>
+</script>
+
+</body>
 </html>
