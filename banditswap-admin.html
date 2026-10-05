@@ -1,1 +1,871 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BanditSwap Admin</title><style>body{margin:0;background:#080808;color:#fff;font-family:Arial,sans-serif;padding:20px}.box{max-width:650px;margin:auto;background:#151515;border:1px solid #6f5a1e;border-radius:18px;padding:20px}h1{color:#f9e27d}input{width:100%;box-sizing:border-box;padding:13px;margin:7px 0;background:#090909;color:#fff;border:1px solid #444;border-radius:10px}button{width:100%;padding:13px;margin-top:10px;border:0;border-radius:12px;font-weight:700;background:#f1d45a;color:#111}.secondary{background:#222;color:#f9e27d;border:1px solid #6f5a1e}.item{padding:10px 0;border-bottom:1px solid #333;font-size:13px;word-break:break-all}.note{color:#aaa;font-size:13px;line-height:1.5}.ok{color:#9be59b}</style></head><body><div class="box"><h1>BanditSwap Admin</h1><p class="note">Add tokens to the public BanditSwap list. This page never stores a GitHub password or access token. After editing, download the JSON file and upload it to your repository as <b>banditswap-tokens.json</b>.</p><input id="name" placeholder="Token name"><input id="symbol" placeholder="Symbol"><input id="address" placeholder="Cronos contract address (0x...)"><input id="decimals" type="number" min="0" max="18" placeholder="Decimals (usually 18)"><button onclick="add()">Add Token</button><button class="secondary" onclick="download()">Download Public Token List</button><div id="msg" class="note"></div><h3>Current custom tokens</h3><div id="list"></div></div><script>let tokens=[];async function init(){try{let r=await fetch('banditswap-tokens.json?'+Date.now());tokens=await r.json();if(!Array.isArray(tokens))tokens=[]}catch{tokens=[]}render()}function render(){list.innerHTML=tokens.map((t,i)=>`<div class="item"><b>${t.symbol}</b> — ${t.name}<br>${t.address}<br>Decimals: ${t.decimals}</div>`).join('')}function add(){let n=name.value.trim(),s=symbol.value.trim().toUpperCase(),a=address.value.trim(),d=Number(decimals.value);if(!n||!s||!/^0x[a-fA-F0-9]{40}$/.test(a)||!Number.isInteger(d)||d<0||d>18){msg.textContent='Enter valid token details.';return}if(tokens.some(t=>t.address.toLowerCase()===a.toLowerCase())){msg.textContent='That contract is already listed.';return}tokens.push({name:n,symbol:s,address:a,decimals:d});name.value=symbol.value=address.value=decimals.value='';msg.innerHTML='<span class="ok">Added. Download the updated JSON and upload it to GitHub.</span>';render()}function download(){let blob=new Blob([JSON.stringify(tokens,null,2)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='banditswap-tokens.json';a.click();URL.revokeObjectURL(u)}init();</script></body></html>
+<!doctype html>
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1">
+
+<title>BanditSwap Admin</title>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:#080808;
+  color:#fff;
+  font-family:Arial,sans-serif;
+  padding:20px;
+}
+
+.box{
+  max-width:650px;
+  margin:auto;
+  background:#151515;
+  border:1px solid #6f5a1e;
+  border-radius:18px;
+  padding:20px;
+}
+
+h1{
+  color:#f9e27d;
+  margin-top:0;
+}
+
+h3{
+  color:#f9e27d;
+}
+
+input{
+  width:100%;
+  box-sizing:border-box;
+  padding:13px;
+  margin:7px 0;
+  background:#090909;
+  color:#fff;
+  border:1px solid #444;
+  border-radius:10px;
+}
+
+button{
+  width:100%;
+  padding:13px;
+  margin-top:10px;
+  border:0;
+  border-radius:12px;
+  font-weight:700;
+  background:#f1d45a;
+  color:#111;
+  cursor:pointer;
+}
+
+.secondary{
+  background:#222;
+  color:#f9e27d;
+  border:1px solid #6f5a1e;
+}
+
+.danger{
+  width:auto;
+  padding:8px 12px;
+  margin:0;
+  background:#250d0d;
+  color:#ffb3b3;
+  border:1px solid #633;
+}
+
+.item{
+  padding:12px 0;
+  border-bottom:1px solid #333;
+  font-size:13px;
+  word-break:break-all;
+}
+
+.item-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.note{
+  color:#aaa;
+  font-size:13px;
+  line-height:1.5;
+}
+
+.ok{
+  color:#9be59b;
+}
+
+.warn{
+  color:#ffd27a;
+}
+
+.status{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #333;
+  border-radius:10px;
+  display:none;
+}
+
+.hidden{
+  display:none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>BanditSwap Admin</h1>
+
+<p class="note">
+
+This is the private token-management page for BanditSwap.
+
+Add or remove tokens here, then download the updated
+<b>banditswap-tokens.json</b> file and replace the existing
+JSON file in your GitHub repository.
+
+This page does not contain a GitHub password or access token.
+
+</p>
+
+
+<div id="loginBox">
+
+<input
+  id="password"
+  type="password"
+  placeholder="Admin password"
+  autocomplete="off">
+
+<button
+  type="button"
+  onclick="login()">
+
+Unlock Admin
+
+</button>
+
+<div
+  id="loginMessage"
+  class="note">
+</div>
+
+</div>
+
+
+<div
+  id="adminArea"
+  class="hidden">
+
+<h3>Add Token</h3>
+
+<input
+  id="name"
+  placeholder="Token name">
+
+<input
+  id="symbol"
+  placeholder="Symbol">
+
+<input
+  id="address"
+  placeholder="Cronos contract address (0x...)">
+
+<input
+  id="decimals"
+  type="number"
+  min="0"
+  max="36"
+  value="18"
+  placeholder="Decimals">
+
+<button
+  type="button"
+  onclick="addToken()">
+
+Add Token
+
+</button>
+
+
+<button
+  class="secondary"
+  type="button"
+  onclick="downloadJSON()">
+
+Download Updated JSON
+
+</button>
+
+
+<button
+  class="secondary"
+  type="button"
+  onclick="reloadJSON()">
+
+Reload JSON From GitHub
+
+</button>
+
+
+<button
+  class="secondary"
+  type="button"
+  onclick="logout()">
+
+Lock Admin
+
+</button>
+
+
+<div
+  id="message"
+  class="status">
+</div>
+
+
+<h3>
+Current Public Token List
+</h3>
+
+<div
+  id="list">
+</div>
+
+
+<p class="note">
+
+After making your changes:
+
+<br><br>
+
+1. Tap <b>Download Updated JSON</b>.
+
+<br>
+2. Upload the downloaded
+<b>banditswap-tokens.json</b>
+to your GitHub repository.
+
+<br>
+3. Replace the old JSON file.
+
+<br>
+4. Commit the change.
+
+<br>
+5. Refresh the public BanditSwap page.
+
+</p>
+
+</div>
+
+</div>
+
+
+<script>
+
+const ADMIN_PASSWORD =
+'BanditAdmin2026';
+
+let tokens = [];
+
+let unlocked = false;
+
+
+/* =====================================================
+   LOAD JSON
+   ===================================================== */
+
+async function loadJSON(){
+
+try{
+
+const response =
+await fetch(
+'./banditswap-tokens.json?'+Date.now(),
+{
+cache:'no-store'
+}
+);
+
+if(!response.ok){
+
+throw new Error(
+'Could not load banditswap-tokens.json'
+);
+
+}
+
+const data =
+await response.json();
+
+if(Array.isArray(data)){
+
+tokens = data;
+
+}else if(
+data &&
+Array.isArray(data.tokens)
+){
+
+tokens = data.tokens;
+
+}else{
+
+throw new Error(
+'The JSON file has an invalid format.'
+);
+
+}
+
+render();
+
+}catch(error){
+
+tokens = [];
+
+render();
+
+showMessage(
+'Could not load the token JSON: '+
+error.message,
+'warn'
+);
+
+}
+
+}
+
+
+/* =====================================================
+   LOGIN
+   ===================================================== */
+
+function login(){
+
+const value =
+document.getElementById(
+'password'
+).value;
+
+if(value === ADMIN_PASSWORD){
+
+unlocked = true;
+
+document.getElementById(
+'loginBox'
+).classList.add(
+'hidden'
+);
+
+document.getElementById(
+'adminArea'
+).classList.remove(
+'hidden'
+);
+
+document.getElementById(
+'password'
+).value = '';
+
+loadJSON();
+
+}else{
+
+document.getElementById(
+'loginMessage'
+).textContent =
+'Incorrect admin password.';
+
+}
+
+}
+
+
+/* =====================================================
+   LOGOUT
+   ===================================================== */
+
+function logout(){
+
+unlocked = false;
+
+document.getElementById(
+'adminArea'
+).classList.add(
+'hidden'
+);
+
+document.getElementById(
+'loginBox'
+).classList.remove(
+'hidden'
+);
+
+}
+
+
+/* =====================================================
+   ESCAPE
+   ===================================================== */
+
+function esc(value){
+
+return String(value).replace(
+/[&<>"']/g,
+
+function(m){
+
+return {
+
+'&':'&amp;',
+'<':'&lt;',
+'>':'&gt;',
+'"':'&quot;',
+"'":'&#39;'
+
+}[m];
+
+}
+
+);
+
+}
+
+
+/* =====================================================
+   DISPLAY TOKEN LIST
+   ===================================================== */
+
+function render(){
+
+const list =
+document.getElementById(
+'list'
+);
+
+if(!tokens.length){
+
+list.innerHTML =
+'<p class="note">No tokens found.</p>';
+
+return;
+
+}
+
+list.innerHTML =
+tokens.map(
+function(token,index){
+
+return `
+
+<div class="item">
+
+<div class="item-top">
+
+<div>
+
+<b>
+${esc(token.symbol || '')}
+</b>
+
+—
+${esc(token.name || '')}
+
+<br>
+
+<span class="note">
+${esc(token.address || '')}
+<br>
+Decimals: ${esc(token.decimals ?? '')}
+</span>
+
+</div>
+
+<button
+class="danger"
+type="button"
+onclick="removeToken(${index})">
+
+Remove
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}
+).join('');
+
+}
+
+
+/* =====================================================
+   ADD TOKEN
+   ===================================================== */
+
+function addToken(){
+
+if(!unlocked){
+
+showMessage(
+'Unlock the Admin Panel first.',
+'warn'
+);
+
+return;
+
+}
+
+const name =
+document.getElementById(
+'name'
+).value.trim();
+
+const symbol =
+document.getElementById(
+'symbol'
+).value.trim().toUpperCase();
+
+const address =
+document.getElementById(
+'address'
+).value.trim();
+
+const decimals =
+Number(
+document.getElementById(
+'decimals'
+).value
+);
+
+
+if(!name || !symbol || !address){
+
+showMessage(
+'Enter the token name, symbol and contract address.',
+'warn'
+);
+
+return;
+
+}
+
+
+if(
+!/^0x[a-fA-F0-9]{40}$/.test(address)
+){
+
+showMessage(
+'That is not a valid Cronos contract address.',
+'warn'
+);
+
+return;
+
+}
+
+
+if(
+!Number.isInteger(decimals) ||
+decimals < 0 ||
+decimals > 36
+){
+
+showMessage(
+'Decimals must be a whole number from 0 to 36.',
+'warn'
+);
+
+return;
+
+}
+
+
+const lowerAddress =
+address.toLowerCase();
+
+
+const duplicateAddress =
+tokens.some(
+function(token){
+
+return String(
+token.address || ''
+).toLowerCase()
+===
+lowerAddress;
+
+}
+);
+
+
+if(duplicateAddress){
+
+showMessage(
+'That contract is already in the token list.',
+'warn'
+);
+
+return;
+
+}
+
+
+const duplicateSymbol =
+tokens.some(
+function(token){
+
+return String(
+token.symbol || ''
+).toUpperCase()
+===
+symbol;
+
+}
+);
+
+
+if(duplicateSymbol){
+
+showMessage(
+'That token symbol is already in the token list.',
+'warn'
+);
+
+return;
+
+}
+
+
+tokens.push({
+
+name:name,
+
+symbol:symbol,
+
+address:address,
+
+decimals:decimals
+
+});
+
+
+render();
+
+
+document.getElementById(
+'name'
+).value = '';
+
+document.getElementById(
+'symbol'
+).value = '';
+
+document.getElementById(
+'address'
+).value = '';
+
+document.getElementById(
+'decimals'
+).value = '18';
+
+
+showMessage(
+symbol+
+' added. Now tap Download Updated JSON and upload the downloaded file to GitHub.',
+'ok'
+);
+
+}
+
+
+/* =====================================================
+   REMOVE TOKEN
+   ===================================================== */
+
+function removeToken(index){
+
+if(!unlocked)
+return;
+
+const token =
+tokens[index];
+
+if(!token)
+return;
+
+
+if(
+!confirm(
+'Remove '+
+token.symbol+
+' from the public token list?'
+)
+)
+return;
+
+
+tokens.splice(
+index,
+1
+);
+
+render();
+
+showMessage(
+token.symbol+
+' removed. Download the updated JSON and upload it to GitHub.',
+'ok'
+);
+
+}
+
+
+/* =====================================================
+   DOWNLOAD JSON
+   ===================================================== */
+
+function downloadJSON(){
+
+if(!unlocked){
+
+showMessage(
+'Unlock the Admin Panel first.',
+'warn'
+);
+
+return;
+
+}
+
+
+const json =
+JSON.stringify(
+tokens,
+null,
+2
+);
+
+
+const blob =
+new Blob(
+[json],
+{
+type:'application/json'
+}
+);
+
+
+const url =
+URL.createObjectURL(
+blob
+);
+
+
+const link =
+document.createElement(
+'a'
+);
+
+link.href =
+url;
+
+link.download =
+'banditswap-tokens.json';
+
+document.body.appendChild(
+link
+);
+
+link.click();
+
+link.remove();
+
+URL.revokeObjectURL(
+url
+);
+
+
+showMessage(
+'JSON downloaded. Upload banditswap-tokens.json to GitHub and replace the old file.',
+'ok'
+);
+
+}
+
+
+/* =====================================================
+   RELOAD
+   ===================================================== */
+
+function reloadJSON(){
+
+if(!unlocked)
+return;
+
+loadJSON();
+
+showMessage(
+'Token list reloaded from GitHub.',
+'ok'
+);
+
+}
+
+
+/* =====================================================
+   MESSAGE
+   ===================================================== */
+
+function showMessage(
+message,
+type
+){
+
+const box =
+document.getElementById(
+'message'
+);
+
+box.style.display =
+'block';
+
+box.className =
+'status '+
+(type === 'ok'
+? 'ok'
+: 'warn');
+
+box.textContent =
+message;
+
+}
+
+
+/* =====================================================
+   START
+   ===================================================== */
+
+</script>
+
+</body>
+</html>
