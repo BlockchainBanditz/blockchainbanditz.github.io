@@ -29,11 +29,6 @@
   <button id="continueBtn" class="primary" style="display:none" onclick="continueToWallet()">Continue to Wallet</button>
   <p class="foot">No transaction is sent until you approve the final wallet confirmation. Token approvals are requested only when needed.</p>
 </section>
-<section class="panel admin">
-  <h2>BanditSwap Token List</h2>
-  <p class="admin-note">Public tokens are loaded from <b>banditswap-tokens.json</b>. The admin tool creates an updated file for you to upload to GitHub. No GitHub password or access token is stored in this site.</p>
-  <div id="tokenList" class="token-list"></div>
-</section>
 </main>
 <script>
 const RPC='https://evm.cronos.com';
@@ -53,21 +48,10 @@ const starterTokens=[
 ];
 let walletProvider=null,walletAddress=null,pending=null,lastPath=null,lastQuote=null;
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function tokens(){try{let x=JSON.parse(localStorage.getItem('banditSwapTokens')||'[]');return starterTokens.concat(Array.isArray(x)?x:[])}catch{return starterTokens}}
-function populate(){let ts=tokens(),a=document.getElementById('fromToken'),b=document.getElementById('toToken');a.innerHTML=b.innerHTML='';ts.forEach(t=>{a.add(new Option(t.symbol+' — '+t.name,t.symbol));b.add(new Option(t.symbol+' — '+t.name,t.symbol))});a.value='CRO';b.value='BUCKX';renderList(ts)}
-function renderList(ts){document.getElementById('tokenList').innerHTML=ts.map(t=>`<div class="token-item"><span><b>${esc(t.symbol)}</b> — ${esc(t.name)}<br><small>${esc(t.address)}</small></span><span class="badge">LISTED</span></div>`).join('')}
-function addToken(){let name=tokenName.value.trim(),symbol=tokenSymbol.value.trim().toUpperCase(),address=tokenAddress.value.trim();if(!name||!symbol||!/^0x[a-fA-F0-9]{40}$/.test(address)){show('Enter a name, symbol and valid Cronos contract address.');return}let x=[];try{x=JSON.parse(localStorage.getItem('banditSwapTokens')||'[]')}catch{};if(x.some(t=>t.address.toLowerCase()===address.toLowerCase())){show('That token is already listed.');return}x.push({name,symbol,address,decimals:null});localStorage.setItem('banditSwapTokens',JSON.stringify(x));tokenName.value=tokenSymbol.value=tokenAddress.value='';async function loadPublicTokens(){
-  try{
-    const r=await fetch('banditswap-tokens.json?'+Date.now(),{cache:'no-store'});
-    if(!r.ok)throw Error('public token list unavailable');
-    const publicTokens=await r.json();
-    if(Array.isArray(publicTokens)){
-      publicTokens.forEach(t=>{if(t&&t.symbol&&t.address&&!starterTokens.some(x=>x.symbol===t.symbol))starterTokens.push(t)});
-    }
-  }catch(e){console.warn(e)}
-  populate();
-}
-loadPublicTokens();show(symbol+' added to this device.');}
+let publicTokens=[];
+function tokens(){return starterTokens.concat(Array.isArray(publicTokens)?publicTokens:[])}
+function populate(){let ts=tokens(),a=document.getElementById('fromToken'),b=document.getElementById('toToken');a.innerHTML=b.innerHTML='';ts.forEach(t=>{a.add(new Option(t.symbol+' — '+t.name,t.symbol));b.add(new Option(t.symbol+' — '+t.name,t.symbol))});a.value='CRO';b.value='BUCKX';}
+async function loadPublicTokens(){try{let r=await fetch('./banditswap-tokens.json',{cache:'no-store'});if(!r.ok)throw new Error('Token list unavailable');let x=await r.json();publicTokens=Array.isArray(x)?x:(Array.isArray(x.tokens)?x.tokens:[]);populate();}catch(e){populate();}}
 function flipTokens(){let a=fromToken.value,b=toToken.value;fromToken.value=b;toToken.value=a;clearPrepared();}
 function show(t){let e=document.getElementById('status');e.style.display='block';e.textContent=t}
 function clearPrepared(){pending=null;review.style.display='none';continueBtn.style.display='none';toAmount.value='';}
@@ -103,17 +87,6 @@ async function prepareSwap(){clearPrepared();if(!walletAddress){await connectWal
 async function continueToWallet(){if(!pending){show('No prepared swap.');return}let p=pending;pending=null;continueBtn.disabled=true;continueBtn.textContent='Opening Wallet…';try{let h=await wreq('eth_sendTransaction',[p.tx]);show('Swap submitted. Waiting for confirmation…');await waitReceipt(h);review.innerHTML+='<div class="ok" style="margin-top:12px">Swap confirmed. Tx: '+esc(h)+'</div>';continueBtn.style.display='none';await updateBalances()}catch(e){show('Wallet/swap stopped: '+(e.message||String(e)));continueBtn.disabled=false;continueBtn.textContent='Continue to Wallet';pending=p}}
 async function waitReceipt(h){for(let i=0;i<90;i++){let r=await wreq('eth_getTransactionReceipt',[h]);if(r){if(r.status==='0x0')throw Error('Transaction reverted.');return r}await new Promise(r=>setTimeout(r,2000))}throw Error('Confirmation timed out. Check Cronos Explorer.');}
 fromAmount.addEventListener('input',clearPrepared);fromToken.addEventListener('change',()=>{clearPrepared();updateBalances()});toToken.addEventListener('change',()=>{clearPrepared();updateBalances()});
-async function loadPublicTokens(){
-  try{
-    const r=await fetch('banditswap-tokens.json?'+Date.now(),{cache:'no-store'});
-    if(!r.ok)throw Error('public token list unavailable');
-    const publicTokens=await r.json();
-    if(Array.isArray(publicTokens)){
-      publicTokens.forEach(t=>{if(t&&t.symbol&&t.address&&!starterTokens.some(x=>x.symbol===t.symbol))starterTokens.push(t)});
-    }
-  }catch(e){console.warn(e)}
-  populate();
-}
 loadPublicTokens();
 </script>
 </body></html>
