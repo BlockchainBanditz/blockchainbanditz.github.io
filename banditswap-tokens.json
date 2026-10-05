@@ -46,5 +46,11 @@
     "symbol": "VVS",
     "address": "0x2D03bECE6747ADC00E1a131BBA1469C15fD11e03",
     "decimals": 18
+  },
+  {
+    "name": "Tonic",
+    "symbol": "TONIC",
+    "address": "0xDD73dEa10ABC2Bff99c60882EC5b2B81Bb1Dc5B2",
+    "decimals": 18
   }
 ]
